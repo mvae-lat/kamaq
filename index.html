@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kamaq — Gana posteando · Plataforma UGC LATAM</title>
+<style>
+  :root{
+    --bg:#f4efe7;--card:#fff;--border:#e7e1d5;--txt:#17130e;--mut2:#79716a;
+    --accent:#ff5a2c;--grad:linear-gradient(120deg,#ff6a2c,#ff3f5f);
+    --good:#12a150;--warn:#c2740a;--bad:#e11d48;--radius:20px;
+    --shadow:0 10px 30px -12px rgba(40,25,10,.18);--shadow-lg:0 30px 60px -20px rgba(40,25,10,.28);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
+  .muted{color:var(--mut2)}
+  .pill{display:inline-flex;align-items:center;gap:7px;font-size:12.5px;font-weight:700;padding:6px 14px;border-radius:999px;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow)}
+  .badge{font-size:11px;font-weight:800;padding:4px 10px;border-radius:999px}
+  .b-good{background:#12a15018;color:var(--good)}.b-warn{background:#c2740a18;color:var(--warn)}
+  .b-bad{background:#e11d4818;color:var(--bad)}.b-info{background:#17130e0d;color:#17130e}
+  .b-new{background:#ff5a2c18;color:#c1400f}
+  .grad-txt{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+  button{font-family:inherit;cursor:pointer;border:none}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-size:14.5px;font-weight:700;padding:12px 22px;border-radius:999px;background:#17130e;color:#fff;transition:transform .15s;box-shadow:0 8px 20px -8px rgba(23,19,14,.5)}
+  .btn:hover{transform:translateY(-1px)}
+  .btn.accent{background:var(--accent);box-shadow:0 8px 22px -8px rgba(255,90,44,.6)}
+  .btn.ghost{background:#fff;color:var(--txt);border:1px solid var(--border);box-shadow:var(--shadow)}
+  .btn.sm{padding:9px 16px;font-size:13px}.btn.wide{width:100%}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+  nav{position:sticky;top:0;z-index:50;padding:12px 0}
+  nav .wrap{display:flex;align-items:center;gap:18px;height:60px;background:#fffffff2;backdrop-filter:blur(16px);border:1px solid var(--border);border-radius:999px;padding:0 12px 0 22px;box-shadow:var(--shadow)}
+  .logo{display:flex;align-items:center;gap:9px;font-weight:900;font-size:20px;letter-spacing:-.03em;cursor:pointer}
+  .logo .dot{width:28px;height:28px;border-radius:9px;background:var(--accent);display:grid;place-items:center;color:#fff;font-size:16px;font-weight:900}
+  .nav-links{display:flex;gap:2px;margin-left:6px}
+  .nav-links a{font-size:14px;color:var(--mut2);padding:8px 12px;border-radius:999px;font-weight:600;cursor:pointer}
+  .nav-links a:hover{color:var(--txt);background:#17130e0a}
+  .spacer{flex:1}
+  .toggle{display:flex;background:#17130e0a;border-radius:999px;padding:3px}
+  .toggle button{background:transparent;color:var(--mut2);font-size:13px;font-weight:700;padding:7px 15px;border-radius:999px}
+  .toggle button.on{background:#fff;color:var(--txt);box-shadow:var(--shadow)}
+  section.view{display:none;animation:fade .35s ease}
+  section.view.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hero{position:relative;overflow:hidden;padding:66px 0 50px}
+  .hero::before{content:"";position:absolute;top:-140px;right:-80px;width:640px;height:520px;background:radial-gradient(closest-side,#ff5a2c1f,transparent)}
+  .hero .wrap{position:relative;text-align:center}
+  .hero h1{font-size:64px;line-height:.98;letter-spacing:-.045em;font-weight:900;max-width:900px;margin:18px auto 0}
+  .hero p.sub{font-size:19px;color:var(--mut2);max-width:600px;margin:22px auto 0}
+  .hero .cta{display:flex;gap:12px;justify-content:center;margin-top:32px;flex-wrap:wrap}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:60px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow)}
+  .stat .n{font-size:32px;font-weight:900;letter-spacing:-.03em}.stat .l{font-size:13px;color:var(--mut2);margin-top:4px}
+  .band{padding:60px 0;margin-top:26px;border-top:1px solid var(--border)}
+  .band h2{font-size:38px;font-weight:900;letter-spacing:-.03em;text-align:center}
+  .band .lead{text-align:center;color:var(--mut2);max-width:560px;margin:14px auto 0}
+  .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:42px}
+  .step{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow)}
+  .step .k{width:42px;height:42px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;font-weight:900;margin-bottom:16px;font-size:17px}
+  .step h3{font-size:18px;margin-bottom:7px;font-weight:800}.step p{font-size:14.5px;color:var(--mut2)}
+  .sec-head{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:22px;flex-wrap:wrap;gap:10px}
+  .sec-head h2{font-size:30px;font-weight:900;letter-spacing:-.03em}.sec-head a{color:var(--accent);font-weight:700;font-size:14px;cursor:pointer}
+  .page-head{padding:34px 0 8px}.page-head h2{font-size:36px;font-weight:900;letter-spacing:-.03em}.page-head p{color:var(--mut2);margin-top:6px;font-size:16px}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+  .camp{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .18s,box-shadow .18s;cursor:pointer;display:flex;flex-direction:column;box-shadow:var(--shadow)}
+  .camp:hover{transform:translateY(-4px);box-shadow:var(--shadow-lg)}
+  .camp .cover{height:130px;position:relative;display:flex;align-items:flex-end;padding:14px}
+  .camp .cover .who{display:flex;align-items:center;gap:8px;font-weight:800;font-size:14px;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25)}
+  .camp .cover .who .ic{width:28px;height:28px;border-radius:8px;display:grid;place-items:center;font-weight:900;color:#fff;font-size:13px}
+  .camp .body{padding:18px;flex:1;display:flex;flex-direction:column;gap:10px}
+  .camp h3{font-size:16.5px;line-height:1.25;font-weight:800}
+  .camp .rate{font-size:24px;font-weight:900;letter-spacing:-.02em}.camp .rate span{font-size:13px;color:var(--mut2);font-weight:500}
+  .camp .metaline{font-size:12.5px;color:var(--mut2);font-weight:600}
+  .camp .meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:auto}
+  .detail{display:grid;grid-template-columns:1.6fr 1fr;gap:24px;margin-top:24px;align-items:start}
+  .panel{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+  .panel h3{font-size:19px;margin-bottom:14px;font-weight:800}
+  .kv{display:flex;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);font-size:14.5px}
+  .kv:last-child{border:none}.kv .v{font-weight:800}
+  .req li{font-size:14.5px;color:var(--mut2);margin:9px 0 9px 18px}
+  .sticky{position:sticky;top:96px}
+  .back{display:inline-flex;align-items:center;gap:6px;color:var(--mut2);font-size:14px;margin-top:28px;cursor:pointer;font-weight:600}
+  label.f{display:block;font-size:13px;font-weight:700;margin:15px 0 6px}
+  input.f,select.f,textarea.f{width:100%;background:#fff;border:1px solid var(--border);border-radius:12px;padding:12px 14px;color:var(--txt);font-family:inherit;font-size:14.5px}
+  input.f:focus,select.f:focus,textarea.f:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px #ff5a2c22}
+  input.f.err,select.f.err{border-color:var(--bad);box-shadow:0 0 0 3px #e11d4818}
+  .ferr{color:var(--bad);font-size:12px;font-weight:600;margin-top:5px;display:none}.ferr.show{display:block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .authwrap{min-height:70vh;display:grid;place-items:center;padding:40px 22px}
+  .authcard{width:100%;max-width:460px;background:var(--card);border:1px solid var(--border);border-radius:24px;padding:34px;box-shadow:var(--shadow-lg)}
+  .authcard .eyebrow{text-align:center;color:var(--mut2);font-size:13px;font-weight:600}
+  .authcard h2{text-align:center;font-size:26px;font-weight:900;letter-spacing:-.02em;margin:4px 0 6px}
+  .authcard .subt{text-align:center;color:var(--mut2);font-size:14px;margin-bottom:8px}
+  .stepper{display:flex;gap:6px;margin:22px 0 8px}.stepper .sd{flex:1;height:6px;border-radius:6px;background:#17130e12}.stepper .sd.on{background:var(--accent)}
+  .stepnav{display:flex;gap:10px;margin-top:22px}
+  .terms{display:flex;gap:9px;align-items:flex-start;margin-top:16px;font-size:13px;color:var(--mut2)}.terms input{margin-top:3px;width:16px;height:16px;accent-color:var(--accent)}
+  .success{text-align:center;padding:10px 0}.success .big{width:64px;height:64px;border-radius:50%;background:#12a15018;color:var(--good);display:grid;place-items:center;font-size:32px;margin:0 auto 16px}
+  .cards4{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-top:22px}
+  .mcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;box-shadow:var(--shadow)}
+  .mcard .t{font-size:13px;color:var(--mut2);font-weight:600}.mcard .v{font-size:30px;font-weight:900;letter-spacing:-.03em;margin-top:7px}
+  table{width:100%;border-collapse:collapse}
+  th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--mut2);padding:11px 14px;border-bottom:1px solid var(--border);font-weight:800}
+  td{padding:14px;border-bottom:1px solid var(--border);font-size:14px;vertical-align:middle}
+  tr:last-child td{border:none}
+  .u{display:flex;align-items:center;gap:10px}
+  .av{width:34px;height:34px;border-radius:50%;background:var(--accent);display:grid;place-items:center;font-weight:800;color:#fff;font-size:13px}
+  .subnav{display:flex;gap:4px;margin-top:20px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:5px;width:fit-content;flex-wrap:wrap;box-shadow:var(--shadow)}
+  .subnav button{background:transparent;color:var(--mut2);font-size:13px;font-weight:700;padding:9px 18px;border-radius:999px}
+  .subnav button.on{background:#17130e;color:#fff}
+  .vinput{width:96px;background:#fff;border:1px solid var(--border);border-radius:9px;padding:7px 9px;font-family:inherit;font-size:13px}
+  footer{border-top:1px solid var(--border);padding:36px 0;margin-top:24px;color:var(--mut2);font-size:13px;text-align:center}
+  .note{background:#ff5a2c10;border:1px solid #ff5a2c33;border-radius:14px;padding:13px 17px;font-size:13px;color:#b23c14;margin-top:18px;font-weight:500}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#17130e;color:#fff;padding:13px 22px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:var(--shadow-lg);z-index:200;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.hero h1{font-size:44px}.nav-links{display:none}}
+  @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <div class="logo" onclick="go('home')"><span class="dot">K</span> Kamaq</div>
+    <div class="nav-links" id="navCreator">
+      <a onclick="go('discover')">Campañas</a>
+      <a onclick="go('home')">Cómo funciona</a>
+    </div>
+    <div class="nav-links" id="navBrand" style="display:none">
+      <a onclick="go('brand')">Panel</a>
+    </div>
+    <div class="spacer"></div>
+    <div class="toggle">
+      <button id="tCreator" class="on" onclick="setRole('creator')">Creador</button>
+      <button id="tBrand" onclick="setRole('brand')">Marca</button>
+    </div>
+    <button class="btn sm accent" id="navCta" onclick="go('register')">Registrarme</button>
+  </div>
+</nav>
+
+<!-- HOME -->
+<section class="view active" id="home">
+  <div class="hero"><div class="wrap">
+    <span class="pill">🇵🇪 Hecho en Perú · escalando a LATAM</span>
+    <h1>Gana dinero <span class="grad-txt">posteando</span> el contenido que ya haces</h1>
+    <p class="sub">Crea clips para Vialex, Royal Home y más marcas, publícalos desde tu cuenta y cobra por cada 1,000 vistas.</p>
+    <div class="cta">
+      <button class="btn accent" onclick="go('register')">Empieza a ganar hoy</button>
+      <button class="btn ghost" onclick="go('discover')">Ver campañas</button>
+    </div>
+  </div></div>
+  <div class="wrap"><div class="stats">
+    <div class="stat"><div class="n grad-txt">S/ 0.80</div><div class="l">pago por cada 1,000 vistas</div></div>
+    <div class="stat"><div class="n">Yape</div><div class="l">y Plin · pagos en 24h</div></div>
+    <div class="stat"><div class="n">0%</div><div class="l">comisión para el creador</div></div>
+    <div class="stat"><div class="n">2</div><div class="l">marcas activas · y creciendo</div></div>
+  </div></div>
+  <div class="band"><div class="wrap">
+    <h2>Cómo funciona</h2>
+    <p class="lead">De registrarte al primer pago en 3 pasos. Todo transparente.</p>
+    <div class="steps">
+      <div class="step"><div class="k">1</div><h3>Regístrate gratis</h3><p>Cuéntanos de ti y tus redes. En minutos accedes a las campañas activas.</p></div>
+      <div class="step"><div class="k">2</div><h3>Postea tu clip</h3><p>Elige una campaña, graba desde tu cuenta de TikTok o Instagram y sube el link.</p></div>
+      <div class="step"><div class="k">3</div><h3>Cobra por vistas</h3><p>Trackeamos tus vistas y pagamos por Yape o Plin. Más viral = más ganas.</p></div>
+    </div>
+  </div></div>
+  <div class="band" style="border:none;padding-top:20px"><div class="wrap">
+    <div class="sec-head"><div><h2>Campañas activas</h2><p class="muted" style="margin-top:6px">Elige una y empieza a ganar hoy.</p></div><a onclick="go('discover')">Ver todas →</a></div>
+    <div class="grid" id="homeCamps"><p class="muted">Cargando campañas…</p></div>
+  </div></div>
+</section>
+
+<!-- REGISTER -->
+<section class="view" id="register"><div class="authwrap"><div class="authcard" id="regCard"></div></div></section>
+
+<!-- DISCOVER -->
+<section class="view" id="discover"><div class="wrap">
+  <div class="page-head"><h2>Campañas disponibles</h2><p>Elige una, postea el clip y empieza a ganar. Pago por cada 1,000 vistas.</p></div>
+  <div class="grid" id="campGrid"><p class="muted">Cargando campañas…</p></div>
+</div></section>
+
+<!-- CAMPAIGN DETAIL -->
+<section class="view" id="campaign"><div class="wrap" id="campDetail"></div></section>
+
+<!-- BRAND (login o panel) -->
+<section class="view" id="brand"><div class="wrap" id="brandRoot"></div></section>
+
+<footer><div class="wrap">Kamaq · Vialex &amp; Royal Home 🇵🇪 → LATAM · <span id="connState">conectando…</span></div></footer>
+<div class="toast" id="toast"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ===== CONEXIÓN SUPABASE ===== */
+const SB_URL='https://glyjniopfjwvmfosvlsn.supabase.co';
+const SB_KEY='sb_publishable_fIRJ5hQTdNe2t_j1QVqdCg_hyGQSJFu';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+
+/* ===== HELPERS ===== */
+const money=n=>'S/ '+Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
+const kviews=n=>{n=Number(n||0);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?Math.round(n/1e3)+'K':n;};
+const brandColor=m=>({'Vialex':'#0ea5b7','Royal Home':'#c98a12'}[m]||'#ff5a2c');
+const grads=['linear-gradient(135deg,#0e7490,#22d3ee)','linear-gradient(135deg,#b45309,#fbbf24)','linear-gradient(135deg,#7c2d12,#ff6a2c)','linear-gradient(135deg,#065f46,#34d399)','linear-gradient(135deg,#9f1239,#fb7185)','linear-gradient(135deg,#1e3a8a,#60a5fa)'];
+const gradFor=i=>grads[i%grads.length];
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+let CAMPS=[];
+
+/* ===== ROLE / ROUTER ===== */
+function setRole(r){
+  document.getElementById('tCreator').classList.toggle('on',r==='creator');
+  document.getElementById('tBrand').classList.toggle('on',r==='brand');
+  document.getElementById('navCreator').style.display=r==='creator'?'flex':'none';
+  document.getElementById('navBrand').style.display=r==='brand'?'flex':'none';
+  const cta=document.getElementById('navCta');
+  if(r==='creator'){cta.style.display='';cta.setAttribute('onclick',"go('register')");go('home');}
+  else{cta.style.display='none';go('brand');}
+}
+function go(view,arg){
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.getElementById(view).classList.add('active');
+  window.scrollTo({top:0,behavior:'smooth'});
+  if(view==='discover')renderCamps();
+  if(view==='register'){regStep=1;regData={};renderReg();}
+  if(view==='brand')renderBrand();
+}
+
+/* ===== CAMPAÑAS (desde DB) ===== */
+async function loadCamps(){
+  const {data,error}=await sb.from('campanas').select('*').eq('estado','activa').order('created_at',{ascending:true});
+  if(error){console.error(error);document.getElementById('connState').textContent='sin conexión';return;}
+  CAMPS=data||[];
+  document.getElementById('connState').textContent='conectado ✓ · '+CAMPS.length+' campañas';
+  const home=document.getElementById('homeCamps');
+  home.innerHTML=CAMPS.slice(0,3).map((c,i)=>campCard(c,i)).join('')||'<p class="muted">Aún no hay campañas.</p>';
+  if(document.getElementById('discover').classList.contains('active'))renderCamps();
+}
+function campCard(c,i){
+  return `<div class="camp" onclick="openCampaign('${c.id}')">
+    <div class="cover" style="background:${gradFor(i)}"><div class="who"><span class="ic" style="background:${brandColor(c.marca)}">${(c.marca||'?')[0]}</span> ${c.marca||''}</div></div>
+    <div class="body"><h3>${c.titulo||''}</h3>
+      <div class="rate">${money(c.tarifa_1k)} <span>/ 1,000 vistas</span></div>
+      <div class="metaline">${c.categoria||''} · Presupuesto ${money(c.presupuesto)}</div>
+      <div class="meta"><span class="badge b-info">${c.plataforma||''}</span><span class="badge b-good">Activa</span></div>
+    </div></div>`;
+}
+function renderCamps(){
+  const g=document.getElementById('campGrid');
+  g.innerHTML=CAMPS.length?CAMPS.map((c,i)=>campCard(c,i)).join(''):'<p class="muted">Aún no hay campañas activas.</p>';
+}
+function openCampaign(id){
+  const i=CAMPS.findIndex(x=>x.id===id);const c=CAMPS[i];if(!c)return;
+  document.getElementById('campDetail').innerHTML=`
+    <div class="detail"><div>
+      <div class="cover" style="height:180px;border-radius:20px;background:${gradFor(i)};display:flex;align-items:flex-end;padding:18px;box-shadow:var(--shadow)">
+        <div class="who" style="font-size:16px;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;background:${brandColor(c.marca)}">${(c.marca||'?')[0]}</span> ${c.marca||''}</div></div>
+      <h2 style="font-size:30px;margin:18px 0 6px;letter-spacing:-.03em;font-weight:900">${c.titulo||''}</h2>
+      <div style="display:flex;gap:8px;margin-bottom:16px"><span class="badge b-info">${c.plataforma||''}</span><span class="badge b-good">Activa</span></div>
+      <div class="panel"><h3>Brief de la campaña</h3><ul class="req">
+        <li>${c.brief||'Graba un clip vertical de 15–30s mostrando el producto de forma natural.'}</li>
+        <li>Menciona ${c.marca} ${c.hashtag?('con el hashtag <b>'+c.hashtag+'</b>'):'en el video o descripción'}.</li>
+        <li>Publica desde tu propia cuenta de ${c.plataforma||'TikTok/Instagram'}.</li>
+        <li>Solo vistas orgánicas cuentan — nada de bots.</li></ul></div>
+      <div class="panel" style="margin-top:16px"><h3>Reglas de pago</h3>
+        <div class="kv"><span>Pago por 1,000 vistas</span><span class="v grad-txt">${money(c.tarifa_1k)}</span></div>
+        <div class="kv"><span>Mínimo para cobrar</span><span class="v">10,000 vistas</span></div></div>
+    </div>
+    <div class="sticky"><div class="panel"><h3>Enviar mi clip</h3>
+      <label class="f">Link del video publicado</label><input class="f" id="clip_link" placeholder="https://...">
+      <label class="f">Tu usuario</label><input class="f" id="clip_user" placeholder="@tucuenta">
+      <button class="btn accent wide" style="margin-top:16px" id="clipBtn" onclick="submitClip('${c.id}','${c.plataforma||''}')">Enviar para revisión</button>
+      <div class="note">Estimado: 100K vistas ≈ <b>${money((c.tarifa_1k||0)*100)}</b></div></div></div></div>
+    <div class="back" onclick="go('discover')">← Volver a campañas</div>`;
+  go('campaign');
+}
+async function submitClip(campId,plat){
+  const link=document.getElementById('clip_link').value.trim();
+  if(!link){toast('Pega el link de tu video');return;}
+  const btn=document.getElementById('clipBtn');btn.disabled=true;btn.textContent='Enviando…';
+  const {error}=await sb.from('clips').insert({campana_id:campId,link,plataforma:plat,estado:'revision'});
+  if(error){btn.disabled=false;btn.textContent='Enviar para revisión';toast('Error al enviar. Intenta de nuevo.');return;}
+  btn.textContent='✓ Enviado';toast('¡Clip enviado! Entrará a revisión.');
+}
+
+/* ===== REGISTRO (multi-paso → DB) ===== */
+let regStep=1,regData={};
+function utm(){const p=new URLSearchParams(location.search);return p.get('utm_source')||p.get('utm')||'';}
+function renderReg(){
+  const card=document.getElementById('regCard');
+  const dots=`<div class="stepper">${[1,2,3].map(i=>`<div class="sd ${i<=regStep?'on':''}"></div>`).join('')}</div>`;
+  if(regStep===1){
+    card.innerHTML=`<div class="eyebrow">Bienvenido a Kamaq</div><h2>Crea tu cuenta de creador</h2><div class="subt">Paso 1 de 3 · Tus datos</div>${dots}
+      <label class="f">Nombre completo</label><input class="f" id="r_nombre" value="${regData.nombre||''}" placeholder="Tu nombre"><div class="ferr" id="e_nombre">Ingresa tu nombre</div>
+      <label class="f">Email</label><input class="f" id="r_email" value="${regData.email||''}" placeholder="tucorreo@email.com"><div class="ferr" id="e_email">Ingresa un email válido</div>
+      <label class="f">WhatsApp</label><input class="f" id="r_wsp" value="${regData.wsp||''}" placeholder="9XX XXX XXX"><div class="ferr" id="e_wsp">Ingresa tu WhatsApp (9 dígitos)</div>
+      <div class="stepnav"><button class="btn accent wide" onclick="regNext(1)">Continuar</button></div>`;
+  }else if(regStep===2){
+    card.innerHTML=`<div class="eyebrow">Bienvenido a Kamaq</div><h2>Tus redes</h2><div class="subt">Paso 2 de 3 · Dónde publicas</div>${dots}
+      <div class="row2"><div><label class="f">Usuario TikTok</label><input class="f" id="r_tt" value="${regData.tt||''}" placeholder="@usuario"></div>
+      <div><label class="f">Usuario Instagram</label><input class="f" id="r_ig" value="${regData.ig||''}" placeholder="@usuario"></div></div>
+      <div class="ferr" id="e_red">Ingresa al menos una red</div>
+      <label class="f">Seguidores (total aprox.)</label><select class="f" id="r_seg"><option value="">Selecciona…</option><option>Menos de 1,000</option><option>1,000 – 10,000</option><option>10,000 – 50,000</option><option>50,000 – 200,000</option><option>Más de 200,000</option></select><div class="ferr" id="e_seg">Selecciona un rango</div>
+      <div class="stepnav"><button class="btn ghost" onclick="regBack()">Atrás</button><button class="btn accent wide" onclick="regNext(2)">Continuar</button></div>`;
+  }else if(regStep===3){
+    card.innerHTML=`<div class="eyebrow">Bienvenido a Kamaq</div><h2>Casi listo</h2><div class="subt">Paso 3 de 3 · Sobre ti</div>${dots}
+      <label class="f">Ciudad</label><select class="f" id="r_city"><option value="">Selecciona…</option><option>Lima</option><option>Arequipa</option><option>Trujillo</option><option>Cusco</option><option>Piura</option><option>Chiclayo</option><option>Otra</option></select><div class="ferr" id="e_city">Selecciona tu ciudad</div>
+      <label class="f">¿Cómo nos conociste?</label><select class="f" id="r_src"><option value="">Selecciona…</option><option>Anuncio en TikTok</option><option>Anuncio en Instagram</option><option>Anuncio en Google</option><option>Un amigo / referido</option><option>Otro</option></select>
+      <label class="terms"><input type="checkbox" id="r_terms"> Acepto los Términos y la política de privacidad de Kamaq.</label><div class="ferr" id="e_terms">Debes aceptar los términos</div>
+      <div class="stepnav"><button class="btn ghost" onclick="regBack()">Atrás</button><button class="btn accent wide" id="regBtn" onclick="regSubmit()">Crear mi cuenta</button></div>`;
+  }else{
+    card.innerHTML=`<div class="success"><div class="big">✓</div><h2>¡Registro recibido!</h2>
+      <p class="subt" style="margin-bottom:18px">Gracias, ${(regData.nombre||'').split(' ')[0]}. Te contactaremos por WhatsApp para aprobarte y asignarte tu primera campaña.</p>
+      <div class="stepnav"><button class="btn accent wide" onclick="go('discover')">Explorar campañas</button></div></div>`;
+  }
+}
+function showErr(id,cond){const e=document.getElementById(id);if(e)e.classList.toggle('show',cond);const inp=document.getElementById(id.replace('e_','r_'));if(inp)inp.classList.toggle('err',cond);return cond;}
+function regNext(step){
+  let bad=false;
+  if(step===1){
+    regData.nombre=document.getElementById('r_nombre').value.trim();
+    regData.email=document.getElementById('r_email').value.trim();
+    regData.wsp=document.getElementById('r_wsp').value.trim();
+    bad=showErr('e_nombre',!regData.nombre)|bad;
+    bad=showErr('e_email',!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(regData.email))|bad;
+    bad=showErr('e_wsp',regData.wsp.replace(/\D/g,'').length<9)|bad;
+  }else if(step===2){
+    regData.tt=document.getElementById('r_tt').value.trim();
+    regData.ig=document.getElementById('r_ig').value.trim();
+    regData.seg=document.getElementById('r_seg').value;
+    bad=showErr('e_red',!regData.tt&&!regData.ig)|bad;
+    bad=showErr('e_seg',!regData.seg)|bad;
+  }
+  if(bad)return;regStep=step+1;renderReg();
+}
+function regBack(){regStep--;renderReg();}
+async function regSubmit(){
+  regData.city=document.getElementById('r_city').value;
+  regData.src=document.getElementById('r_src').value||utm()||'Directo';
+  const terms=document.getElementById('r_terms').checked;
+  let bad=false;bad=showErr('e_city',!regData.city)|bad;bad=showErr('e_terms',!terms)|bad;
+  if(bad)return;
+  const btn=document.getElementById('regBtn');btn.disabled=true;btn.textContent='Creando…';
+  const {error}=await sb.from('creadores').insert({
+    nombre:regData.nombre,email:regData.email,whatsapp:regData.wsp,
+    tiktok:regData.tt||null,instagram:regData.ig||null,seguidores:regData.seg||null,
+    ciudad:regData.city,fuente:regData.src,estado:'nuevo'
+  });
+  if(error){btn.disabled=false;btn.textContent='Crear mi cuenta';toast('Error al registrar. Intenta de nuevo.');console.error(error);return;}
+  regStep=4;renderReg();
+}
+
+/* ===== PANEL MARCA (login + datos reales) ===== */
+let session=null,brandTab='creators';
+async function renderBrand(){
+  const {data}=await sb.auth.getSession();session=data.session;
+  const root=document.getElementById('brandRoot');
+  if(!session){
+    root.innerHTML=`<div class="authwrap"><div class="authcard">
+      <div class="eyebrow">Panel interno · Kamaq</div><h2>Ingresa a tu panel</h2><div class="subt">Solo para el equipo de Vialex &amp; Royal Home</div>
+      <label class="f">Email</label><input class="f" id="l_email" placeholder="equipo@mvae.lat">
+      <label class="f">Contraseña</label><input class="f" id="l_pass" type="password" placeholder="••••••••">
+      <div class="ferr" id="l_err">Email o contraseña incorrectos</div>
+      <button class="btn accent wide" id="loginBtn" style="margin-top:18px" onclick="login()">Ingresar</button>
+      <div class="note">¿Aún no tienes usuario de equipo? Se crea en Supabase → Authentication → Add user.</div>
+    </div></div>`;return;
+  }
+  root.innerHTML=`<div class="page-head"><h2>Panel interno</h2><p>${session.user.email} · <a style="color:var(--accent);cursor:pointer;font-weight:700" onclick="logout()">salir</a></p></div>
+    <div class="subnav"><button id="tb_creators" onclick="setBrandTab('creators')">Creadores</button><button id="tb_clips" onclick="setBrandTab('clips')">Clips + Vistas</button><button id="tb_camps" onclick="setBrandTab('camps')">Campañas</button></div>
+    <div id="brandBody" style="margin-top:16px"><p class="muted">Cargando…</p></div>`;
+  setBrandTab(brandTab);
+}
+async function login(){
+  const email=document.getElementById('l_email').value.trim();
+  const pass=document.getElementById('l_pass').value;
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='Ingresando…';
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){document.getElementById('l_err').classList.add('show');btn.disabled=false;btn.textContent='Ingresar';return;}
+  renderBrand();
+}
+async function logout(){await sb.auth.signOut();renderBrand();}
+function setBrandTab(t){
+  brandTab=t;['creators','clips','camps'].forEach(x=>{const b=document.getElementById('tb_'+x);if(b)b.classList.toggle('on',x===t);});
+  if(t==='creators')loadCreators();if(t==='clips')loadClips();if(t==='camps')loadBrandCamps();
+}
+function cbadge(e){return e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':'<span class="badge b-new">Nuevo</span>';}
+async function loadCreators(){
+  const b=document.getElementById('brandBody');
+  const {data,error}=await sb.from('creadores').select('*').order('created_at',{ascending:false});
+  if(error){b.innerHTML='<p class="muted">Error al cargar.</p>';return;}
+  if(!data.length){b.innerHTML='<div class="panel"><p class="muted">Aún no hay creadores registrados. Cuando alguien se registre por la landing, aparecerá aquí.</p></div>';return;}
+  b.innerHTML=`<div class="panel" style="padding:0;overflow:hidden"><table>
+    <thead><tr><th>Creador</th><th>Ciudad</th><th>Vino de</th><th>Contacto</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>${data.map(c=>`<tr id="cr_${c.id}">
+      <td><span class="u"><span class="av">${(c.nombre||'?')[0]}</span><div>${c.nombre||''}<div class="muted" style="font-size:12px">${c.tiktok||c.instagram||''}</div></div></span></td>
+      <td>${c.ciudad||'—'}</td><td class="muted" style="font-size:13px">${c.fuente||'—'}</td>
+      <td class="muted" style="font-size:13px">${c.whatsapp||c.email||'—'}</td>
+      <td class="cest">${cbadge(c.estado)}</td>
+      <td style="white-space:nowrap">${c.estado==='nuevo'?`<button class="btn sm" onclick="setCreator('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setCreator('${c.id}','rechazado')">Rechazar</button>`:'—'}</td>
+    </tr>`).join('')}</tbody></table></div>`;
+}
+async function setCreator(id,estado){
+  const {error}=await sb.from('creadores').update({estado}).eq('id',id);
+  if(error){toast('Error al actualizar');return;}
+  const row=document.getElementById('cr_'+id);row.querySelector('.cest').innerHTML=cbadge(estado);row.lastElementChild.innerHTML='—';
+  toast(estado==='aprobado'?'Creador aprobado ✓':'Creador rechazado');
+}
+function ebadge(e){return e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pagando'?'<span class="badge b-good">Pagando</span>':'<span class="badge b-warn">En revisión</span>';}
+async function loadClips(){
+  const b=document.getElementById('brandBody');
+  const {data,error}=await sb.from('clips').select('*, campanas(titulo,marca,tarifa_1k)').order('created_at',{ascending:false});
+  if(error){b.innerHTML='<p class="muted">Error al cargar.</p>';return;}
+  if(!data.length){b.innerHTML='<div class="panel"><p class="muted">Aún no hay clips enviados. Cuando un creador suba un clip a una campaña, aparecerá aquí para aprobar y registrar sus vistas.</p></div>';return;}
+  b.innerHTML=`<p class="muted" style="font-size:14px">Edita las vistas y el pago se calcula solo.</p>
+  <div class="panel" style="margin-top:12px;padding:0;overflow:hidden"><table>
+    <thead><tr><th>Campaña</th><th>Link</th><th>Vistas</th><th>A pagar</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>${data.map(c=>{const r=c.campanas?.tarifa_1k||0;return `<tr id="cl_${c.id}" data-rate="${r}">
+      <td>${c.campanas?c.campanas.titulo:'—'}<div class="muted" style="font-size:12px">${c.campanas?c.campanas.marca:''}</div></td>
+      <td class="muted" style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis"><a href="${c.link}" target="_blank" style="color:var(--accent)">${(c.link||'').replace(/^https?:\/\//,'').slice(0,28)}…</a></td>
+      <td><input class="vinput" type="number" min="0" value="${c.vistas||0}" onchange="updClip('${c.id}',this.value)"></td>
+      <td class="pay" style="font-weight:800">${money((c.vistas||0)/1000*r)}</td>
+      <td class="est">${ebadge(c.estado)}</td>
+      <td style="white-space:nowrap">${c.estado==='revision'?`<button class="btn sm" onclick="setClip('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setClip('${c.id}','rechazado')">Rechazar</button>`:'—'}</td>
+    </tr>`;}).join('')}</tbody></table></div>`;
+}
+async function updClip(id,val){
+  const v=Math.max(0,parseInt(val||0));
+  const row=document.getElementById('cl_'+id);const rate=parseFloat(row.dataset.rate)||0;
+  row.querySelector('.pay').textContent=money(v/1000*rate);
+  await sb.from('clips').update({vistas:v}).eq('id',id);
+}
+async function setClip(id,estado){
+  const {error}=await sb.from('clips').update({estado}).eq('id',id);
+  if(error){toast('Error');return;}
+  const row=document.getElementById('cl_'+id);row.querySelector('.est').innerHTML=ebadge(estado);row.lastElementChild.innerHTML='—';
+  toast(estado==='aprobado'?'Clip aprobado ✓':'Clip rechazado');
+}
+async function loadBrandCamps(){
+  const b=document.getElementById('brandBody');
+  const {data}=await sb.from('campanas').select('*').order('created_at',{ascending:true});
+  b.innerHTML=`<div class="panel" style="padding:0;overflow:hidden"><table>
+    <thead><tr><th>Campaña</th><th>Marca</th><th>Plataforma</th><th>Tarifa</th><th>Presupuesto</th><th>Estado</th></tr></thead>
+    <tbody>${(data||[]).map(c=>`<tr><td style="font-weight:600">${c.titulo}</td>
+      <td><span class="u"><span class="av" style="width:24px;height:24px;font-size:11px;background:${brandColor(c.marca)}">${(c.marca||'?')[0]}</span>${c.marca}</span></td>
+      <td>${c.plataforma||'—'}</td><td style="font-weight:700">${money(c.tarifa_1k)}</td><td>${money(c.presupuesto)}</td>
+      <td><span class="badge b-good">${c.estado}</span></td></tr>`).join('')}</tbody></table></div>`;
+}
+
+/* ===== INIT ===== */
+loadCamps();
+</script>
+</body>
+</html>
