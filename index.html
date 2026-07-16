@@ -199,6 +199,11 @@ const sb=supabase.createClient(SB_URL,SB_KEY);
 const money=n=>'S/ '+Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
 const kviews=n=>{n=Number(n||0);return n>=1e6?(n/1e6).toFixed(1)+'M':n>=1e3?Math.round(n/1e3)+'K':n;};
 const brandColor=m=>({'Vialex':'#0ea5b7','Royal Home':'#c98a12'}[m]||'#ff5a2c');
+const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+/* Devuelve la URL solo si es https y de una red permitida; '' en cualquier otro caso.
+   El link del clip lo escribe cualquier anónimo: un javascript: aquí correría en la sesión del admin. */
+const safeUrl=u=>{try{const x=new URL(String(u??''));
+  return x.protocol==='https:'&&/(^|\.)(tiktok\.com|instagram\.com)$/i.test(x.hostname)?x.href:'';}catch{return '';}};
 const grads=['linear-gradient(135deg,#0e7490,#22d3ee)','linear-gradient(135deg,#b45309,#fbbf24)','linear-gradient(135deg,#7c2d12,#ff6a2c)','linear-gradient(135deg,#065f46,#34d399)','linear-gradient(135deg,#9f1239,#fb7185)','linear-gradient(135deg,#1e3a8a,#60a5fa)'];
 const gradFor=i=>grads[i%grads.length];
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
@@ -235,11 +240,11 @@ async function loadCamps(){
 }
 function campCard(c,i){
   return `<div class="camp" onclick="openCampaign('${c.id}')">
-    <div class="cover" style="background:${gradFor(i)}"><div class="who"><span class="ic" style="background:${brandColor(c.marca)}">${(c.marca||'?')[0]}</span> ${c.marca||''}</div></div>
-    <div class="body"><h3>${c.titulo||''}</h3>
+    <div class="cover" style="background:${gradFor(i)}"><div class="who"><span class="ic" style="background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span> ${esc(c.marca)}</div></div>
+    <div class="body"><h3>${esc(c.titulo)}</h3>
       <div class="rate">${money(c.tarifa_1k)} <span>/ 1,000 vistas</span></div>
-      <div class="metaline">${c.categoria||''} · Presupuesto ${money(c.presupuesto)}</div>
-      <div class="meta"><span class="badge b-info">${c.plataforma||''}</span><span class="badge b-good">Activa</span></div>
+      <div class="metaline">${esc(c.categoria)} · Presupuesto ${money(c.presupuesto)}</div>
+      <div class="meta"><span class="badge b-info">${esc(c.plataforma)}</span><span class="badge b-good">Activa</span></div>
     </div></div>`;
 }
 function renderCamps(){
@@ -251,13 +256,13 @@ function openCampaign(id){
   document.getElementById('campDetail').innerHTML=`
     <div class="detail"><div>
       <div class="cover" style="height:180px;border-radius:20px;background:${gradFor(i)};display:flex;align-items:flex-end;padding:18px;box-shadow:var(--shadow)">
-        <div class="who" style="font-size:16px;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;background:${brandColor(c.marca)}">${(c.marca||'?')[0]}</span> ${c.marca||''}</div></div>
-      <h2 style="font-size:30px;margin:18px 0 6px;letter-spacing:-.03em;font-weight:900">${c.titulo||''}</h2>
-      <div style="display:flex;gap:8px;margin-bottom:16px"><span class="badge b-info">${c.plataforma||''}</span><span class="badge b-good">Activa</span></div>
+        <div class="who" style="font-size:16px;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span> ${esc(c.marca)}</div></div>
+      <h2 style="font-size:30px;margin:18px 0 6px;letter-spacing:-.03em;font-weight:900">${esc(c.titulo)}</h2>
+      <div style="display:flex;gap:8px;margin-bottom:16px"><span class="badge b-info">${esc(c.plataforma)}</span><span class="badge b-good">Activa</span></div>
       <div class="panel"><h3>Brief de la campaña</h3><ul class="req">
-        <li>${c.brief||'Graba un clip vertical de 15–30s mostrando el producto de forma natural.'}</li>
-        <li>Menciona ${c.marca} ${c.hashtag?('con el hashtag <b>'+c.hashtag+'</b>'):'en el video o descripción'}.</li>
-        <li>Publica desde tu propia cuenta de ${c.plataforma||'TikTok/Instagram'}.</li>
+        <li>${esc(c.brief)||'Graba un clip vertical de 15–30s mostrando el producto de forma natural.'}</li>
+        <li>Menciona ${esc(c.marca)} ${c.hashtag?('con el hashtag <b>'+esc(c.hashtag)+'</b>'):'en el video o descripción'}.</li>
+        <li>Publica desde tu propia cuenta de ${esc(c.plataforma)||'TikTok/Instagram'}.</li>
         <li>Solo vistas orgánicas cuentan — nada de bots.</li></ul></div>
       <div class="panel" style="margin-top:16px"><h3>Reglas de pago</h3>
         <div class="kv"><span>Pago por 1,000 vistas</span><span class="v grad-txt">${money(c.tarifa_1k)}</span></div>
@@ -389,9 +394,9 @@ async function loadCreators(){
   b.innerHTML=`<div class="panel" style="padding:0;overflow:hidden"><table>
     <thead><tr><th>Creador</th><th>Ciudad</th><th>Vino de</th><th>Contacto</th><th>Estado</th><th>Acción</th></tr></thead>
     <tbody>${data.map(c=>`<tr id="cr_${c.id}">
-      <td><span class="u"><span class="av">${(c.nombre||'?')[0]}</span><div>${c.nombre||''}<div class="muted" style="font-size:12px">${c.tiktok||c.instagram||''}</div></div></span></td>
-      <td>${c.ciudad||'—'}</td><td class="muted" style="font-size:13px">${c.fuente||'—'}</td>
-      <td class="muted" style="font-size:13px">${c.whatsapp||c.email||'—'}</td>
+      <td><span class="u"><span class="av">${esc((c.nombre||'?')[0])}</span><div>${esc(c.nombre)}<div class="muted" style="font-size:12px">${esc(c.tiktok||c.instagram)}</div></div></span></td>
+      <td>${esc(c.ciudad)||'—'}</td><td class="muted" style="font-size:13px">${esc(c.fuente)||'—'}</td>
+      <td class="muted" style="font-size:13px">${esc(c.whatsapp||c.email)||'—'}</td>
       <td class="cest">${cbadge(c.estado)}</td>
       <td style="white-space:nowrap">${c.estado==='nuevo'?`<button class="btn sm" onclick="setCreator('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setCreator('${c.id}','rechazado')">Rechazar</button>`:'—'}</td>
     </tr>`).join('')}</tbody></table></div>`;
@@ -411,9 +416,13 @@ async function loadClips(){
   b.innerHTML=`<p class="muted" style="font-size:14px">Edita las vistas y el pago se calcula solo.</p>
   <div class="panel" style="margin-top:12px;padding:0;overflow:hidden"><table>
     <thead><tr><th>Campaña</th><th>Link</th><th>Vistas</th><th>A pagar</th><th>Estado</th><th>Acción</th></tr></thead>
-    <tbody>${data.map(c=>{const r=c.campanas?.tarifa_1k||0;return `<tr id="cl_${c.id}" data-rate="${r}">
-      <td>${c.campanas?c.campanas.titulo:'—'}<div class="muted" style="font-size:12px">${c.campanas?c.campanas.marca:''}</div></td>
-      <td class="muted" style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis"><a href="${c.link}" target="_blank" style="color:var(--accent)">${(c.link||'').replace(/^https?:\/\//,'').slice(0,28)}…</a></td>
+    <tbody>${data.map(c=>{const r=c.campanas?.tarifa_1k||0;
+      const u=safeUrl(c.link),txt=esc((c.link||'').replace(/^https?:\/\//,'').slice(0,28));
+      return `<tr id="cl_${c.id}" data-rate="${r}">
+      <td>${esc(c.campanas?c.campanas.titulo:'—')}<div class="muted" style="font-size:12px">${esc(c.campanas?c.campanas.marca:'')}</div></td>
+      <td class="muted" style="font-size:13px;max-width:180px;overflow:hidden;text-overflow:ellipsis">${u
+        ?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">${txt}…</a>`
+        :`<span class="b-bad badge" title="Link no válido: solo se aceptan URLs https de TikTok o Instagram">${txt||'sin link'}…</span>`}</td>
       <td><input class="vinput" type="number" min="0" value="${c.vistas||0}" onchange="updClip('${c.id}',this.value)"></td>
       <td class="pay" style="font-weight:800">${money((c.vistas||0)/1000*r)}</td>
       <td class="est">${ebadge(c.estado)}</td>
@@ -432,15 +441,159 @@ async function setClip(id,estado){
   const row=document.getElementById('cl_'+id);row.querySelector('.est').innerHTML=ebadge(estado);row.lastElementChild.innerHTML='—';
   toast(estado==='aprobado'?'Clip aprobado ✓':'Clip rechazado');
 }
+/* ===== CAMPAÑAS: listar / crear / editar / pausar ===== */
+const MARCAS=['Vialex','Royal Home'];
+const PLATS=['TikTok','Instagram'];
+let CAMPS_ADMIN=[],campForm=null; /* campForm: null | 'new' | id */
+
+/* Gasto real derivado de los clips ya aprobados/pagando.
+   La columna campanas.gastado quedó con datos de siembra y no se actualiza sola;
+   la fuente de verdad son los clips. Ver CLAUDE.md → Gasto por campaña. */
+async function gastadoPorCampana(){
+  const {data,error}=await sb.from('clips').select('campana_id,vistas,campanas(tarifa_1k)').in('estado',['aprobado','pagando']);
+  if(error){console.error(error);return null;}
+  const m={};
+  (data||[]).forEach(c=>{m[c.campana_id]=(m[c.campana_id]||0)+(c.vistas||0)/1000*(c.campanas?.tarifa_1k||0);});
+  return m;
+}
+function estBadge(e){return e==='activa'?'<span class="badge b-good">Activa</span>':e==='pausada'?'<span class="badge b-warn">Pausada</span>':`<span class="badge b-info">${esc(e)}</span>`;}
+function gastCell(g,pres){
+  if(g===null)return '<span class="muted">—</span>';
+  const p=pres>0?Math.min(100,g/pres*100):0;
+  return `<div style="font-weight:700;font-size:13px">${money(g)} <span class="muted" style="font-weight:500">/ ${money(pres)}</span></div>
+    <div style="height:5px;border-radius:5px;background:#17130e12;margin-top:5px;overflow:hidden"><div style="height:100%;width:${p}%;background:${p>=100?'var(--bad)':'var(--accent)'}"></div></div>`;
+}
 async function loadBrandCamps(){
   const b=document.getElementById('brandBody');
-  const {data}=await sb.from('campanas').select('*').order('created_at',{ascending:true});
-  b.innerHTML=`<div class="panel" style="padding:0;overflow:hidden"><table>
-    <thead><tr><th>Campaña</th><th>Marca</th><th>Plataforma</th><th>Tarifa</th><th>Presupuesto</th><th>Estado</th></tr></thead>
-    <tbody>${(data||[]).map(c=>`<tr><td style="font-weight:600">${c.titulo}</td>
-      <td><span class="u"><span class="av" style="width:24px;height:24px;font-size:11px;background:${brandColor(c.marca)}">${(c.marca||'?')[0]}</span>${c.marca}</span></td>
-      <td>${c.plataforma||'—'}</td><td style="font-weight:700">${money(c.tarifa_1k)}</td><td>${money(c.presupuesto)}</td>
-      <td><span class="badge b-good">${c.estado}</span></td></tr>`).join('')}</tbody></table></div>`;
+  const [res,gast]=await Promise.all([
+    sb.from('campanas').select('*').order('created_at',{ascending:true}),
+    gastadoPorCampana()
+  ]);
+  if(res.error){b.innerHTML='<p class="muted">Error al cargar campañas.</p>';console.error(res.error);return;}
+  CAMPS_ADMIN=res.data||[];
+  const editing=campForm&&campForm!=='new'?CAMPS_ADMIN.find(x=>x.id===campForm):null;
+  const form=campForm==='new'?campFormHTML(null):editing?campFormHTML(editing):'';
+  b.innerHTML=`<div class="sec-head" style="margin-bottom:14px">
+      <h2 style="font-size:22px">Campañas</h2>
+      ${campForm?'':`<button class="btn sm accent" onclick="openCampForm('new')">+ Nueva campaña</button>`}
+    </div>
+    ${form}
+    <div class="panel" style="padding:0;overflow:hidden"><table>
+    <thead><tr><th>Campaña</th><th>Marca</th><th>Plataforma</th><th>Tarifa</th><th>Gastado / Presupuesto</th><th>Estado</th><th>Acción</th></tr></thead>
+    <tbody>${CAMPS_ADMIN.map(c=>`<tr>
+      <td style="font-weight:600">${esc(c.titulo)}<div class="muted" style="font-size:12px;font-weight:500">${esc(c.categoria)||'—'}</div></td>
+      <td><span class="u"><span class="av" style="width:24px;height:24px;font-size:11px;background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span>${esc(c.marca)}</span></td>
+      <td>${esc(c.plataforma)||'—'}</td>
+      <td style="font-weight:700">${money(c.tarifa_1k)}</td>
+      <td style="min-width:160px">${gastCell(gast?(gast[c.id]||0):null,c.presupuesto)}</td>
+      <td>${estBadge(c.estado)}</td>
+      <td style="white-space:nowrap"><button class="btn sm ghost" onclick="openCampForm('${c.id}')">Editar</button>
+        <button class="btn sm ghost" onclick="toggleCampEstado('${c.id}')">${c.estado==='activa'?'Pausar':'Activar'}</button></td>
+    </tr>`).join('')||'<tr><td colspan="7" class="muted" style="padding:22px">Aún no hay campañas. Crea la primera con “+ Nueva campaña”.</td></tr>'}
+    </tbody></table></div>`;
+}
+function openCampForm(id){campForm=id;loadBrandCamps();}
+function closeCampForm(){campForm=null;loadBrandCamps();}
+function ncMarcaChange(){
+  const s=document.getElementById('r_ncmarca');
+  document.getElementById('r_ncmarca2').style.display=s.value==='__otra'?'block':'none';
+}
+function campFormHTML(c){
+  const e=c||{},isEdit=!!c;
+  const otra=!!(isEdit&&e.marca&&!MARCAS.includes(e.marca));
+  return `<div class="panel" style="margin-bottom:16px">
+    <h3>${isEdit?'Editar campaña':'Nueva campaña'}</h3>
+    <div class="row2">
+      <div><label class="f">Título</label>
+        <input class="f" id="r_nctitulo" value="${esc(e.titulo)}" placeholder="Verano Vialex — tu look del día">
+        <div class="ferr" id="e_nctitulo">Ingresa un título</div></div>
+      <div><label class="f">Marca</label>
+        <select class="f" id="r_ncmarca" onchange="ncMarcaChange()">
+          <option value="">Selecciona…</option>
+          ${MARCAS.map(m=>`<option ${e.marca===m?'selected':''}>${m}</option>`).join('')}
+          <option value="__otra" ${otra?'selected':''}>Otra…</option>
+        </select>
+        <div class="ferr" id="e_ncmarca">Selecciona la marca</div>
+        <input class="f" id="r_ncmarca2" style="margin-top:8px;display:${otra?'block':'none'}" value="${otra?esc(e.marca):''}" placeholder="Nombre de la marca">
+        <div class="ferr" id="e_ncmarca2">Ingresa el nombre de la marca</div></div>
+    </div>
+    <div class="row2">
+      <div><label class="f">Categoría</label>
+        <input class="f" id="r_nccat" value="${esc(e.categoria)}" placeholder="Moda, Hogar, Reto…">
+        <div class="ferr" id="e_nccat">Ingresa una categoría</div></div>
+      <div><label class="f">Plataforma</label>
+        <select class="f" id="r_ncplat"><option value="">Selecciona…</option>
+          ${PLATS.map(p=>`<option ${e.plataforma===p?'selected':''}>${p}</option>`).join('')}</select>
+        <div class="ferr" id="e_ncplat">Selecciona la plataforma</div></div>
+    </div>
+    <div class="row2">
+      <div><label class="f">Tarifa por 1,000 vistas (S/)</label>
+        <input class="f" id="r_nctarifa" type="number" step="0.05" min="0" value="${e.tarifa_1k??''}" placeholder="0.80">
+        <div class="ferr" id="e_nctarifa">Ingresa una tarifa mayor a 0</div></div>
+      <div><label class="f">Presupuesto (S/)</label>
+        <input class="f" id="r_ncpres" type="number" step="100" min="0" value="${e.presupuesto??''}" placeholder="6000">
+        <div class="ferr" id="e_ncpres">Ingresa un presupuesto mayor a 0</div></div>
+    </div>
+    <label class="f">Hashtag</label>
+    <input class="f" id="r_nchash" value="${esc(e.hashtag)}" placeholder="#VialexVerano">
+    <label class="f">Brief <span class="muted" style="font-weight:500">· si lo dejas vacío, la campaña muestra el brief genérico</span></label>
+    <textarea class="f" id="r_ncbrief" rows="3" placeholder="Graba un clip vertical de 15–30s mostrando el producto de forma natural.">${esc(e.brief)}</textarea>
+    <label class="f">Estado</label>
+    <select class="f" id="r_ncestado">
+      <option value="activa" ${e.estado!=='pausada'?'selected':''}>Activa · visible en el discover</option>
+      <option value="pausada" ${e.estado==='pausada'?'selected':''}>Pausada · oculta para creadores</option>
+    </select>
+    <div class="stepnav">
+      <button class="btn ghost" onclick="closeCampForm()">Cancelar</button>
+      <button class="btn accent wide" id="ncBtn" onclick="saveCamp(${isEdit?`'${e.id}'`:'null'})">${isEdit?'Guardar cambios':'Crear campaña'}</button>
+    </div>
+  </div>`;
+}
+function campErr(err){
+  console.error(err);
+  return err.code==='42501'
+    ? 'Sin permiso para escribir campañas. Falta correr db/campanas-policies.sql en Supabase.'
+    : 'Error al guardar. Revisa la consola.';
+}
+async function saveCamp(id){
+  const marcaSel=document.getElementById('r_ncmarca').value;
+  const marca=marcaSel==='__otra'?document.getElementById('r_ncmarca2').value.trim():marcaSel;
+  const titulo=document.getElementById('r_nctitulo').value.trim();
+  const categoria=document.getElementById('r_nccat').value.trim();
+  const plataforma=document.getElementById('r_ncplat').value;
+  const tarifa=parseFloat(document.getElementById('r_nctarifa').value);
+  const pres=parseFloat(document.getElementById('r_ncpres').value);
+  const hashtag=document.getElementById('r_nchash').value.trim();
+  const brief=document.getElementById('r_ncbrief').value.trim();
+  const estado=document.getElementById('r_ncestado').value;
+  let bad=false;
+  bad=showErr('e_nctitulo',!titulo)|bad;
+  bad=showErr('e_ncmarca',!marcaSel)|bad;
+  bad=showErr('e_ncmarca2',marcaSel==='__otra'&&!marca)|bad;
+  bad=showErr('e_nccat',!categoria)|bad;
+  bad=showErr('e_ncplat',!plataforma)|bad;
+  bad=showErr('e_nctarifa',!(tarifa>0))|bad;
+  bad=showErr('e_ncpres',!(pres>0))|bad;
+  if(bad)return;
+  const btn=document.getElementById('ncBtn');btn.disabled=true;btn.textContent='Guardando…';
+  const payload={titulo,marca,categoria,plataforma,tarifa_1k:tarifa,presupuesto:pres,hashtag:hashtag||null,brief:brief||null,estado};
+  const {error}=id
+    ? await sb.from('campanas').update(payload).eq('id',id)
+    : await sb.from('campanas').insert(payload);
+  if(error){btn.disabled=false;btn.textContent=id?'Guardar cambios':'Crear campaña';toast(campErr(error));return;}
+  toast(id?'Campaña actualizada ✓':'Campaña creada ✓');
+  campForm=null;
+  await loadCamps();
+  loadBrandCamps();
+}
+async function toggleCampEstado(id){
+  const c=CAMPS_ADMIN.find(x=>x.id===id);if(!c)return;
+  const estado=c.estado==='activa'?'pausada':'activa';
+  const {error}=await sb.from('campanas').update({estado}).eq('id',id);
+  if(error){toast(campErr(error));return;}
+  toast(estado==='activa'?'Campaña activada ✓':'Campaña pausada · ya no aparece en el discover');
+  await loadCamps();
+  loadBrandCamps();
 }
 
 /* ===== INIT ===== */
