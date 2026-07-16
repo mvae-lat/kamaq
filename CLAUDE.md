@@ -96,7 +96,10 @@ Editor con la sesión del proyecto. Orden obligatorio:
 - [ ] Verificar que `campanas.estado` acepte `'pausada'`. Si hay un CHECK constraint
   que solo permita `'activa'`, el botón Pausar falla — no se pudo inspeccionar con
   la publishable key. Query: `select conname, pg_get_constraintdef(oid) from pg_constraint where conrelid='public.campanas'::regclass;`
-- [ ] Limpiar la fila de prueba en `creadores` (WHERE fuente = 'test-api').
+- [ ] Limpiar filas de prueba (requiere admin/SQL, el público no puede borrar):
+  `delete from creadores where fuente in ('test-api','qa-kamaq');`
+  `delete from clips where link ilike '%qa.kamaq%';`
+  (la fila `qa-kamaq` y el clip QA se crearon en el test end-to-end del 2026-07-16.)
 
 ### Resuelto en código (working tree)
 - [x] CRUD de campañas en el panel (crear/editar/pausar/activar + columna Gastado).
