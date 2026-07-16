@@ -56,6 +56,12 @@ alter table public.campanas enable row level security;
 drop policy if exists "campanas_insert_authenticated" on public.campanas;
 drop policy if exists "campanas_update_authenticated" on public.campanas;
 drop policy if exists "campanas_admin_write"          on public.campanas;
+-- La política real del esquema original se llamaba "equipo gestiona campanas"
+-- (ALL, authenticated, using true = escritura para cualquier autenticado). Es la
+-- bomba de tiempo descrita arriba; se encontró en producción el 2026-07-16 y se
+-- borra aquí. Si tu esquema tiene otro nombre, inspecciónalo con:
+--   select policyname, cmd, roles, qual from pg_policies where tablename='campanas';
+drop policy if exists "equipo gestiona campanas"      on public.campanas;
 
 create policy "campanas_admin_write" on public.campanas
   for all to authenticated

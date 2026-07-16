@@ -37,9 +37,11 @@ escrito como `to authenticated ... with check (true)` se lo hereda **cada creado
 el día que se encienda el login de creadores. Por eso la escritura de campañas está
 atada a la tabla `usuarios_admin` vía la función `es_admin()`, no al rol genérico.
 
-`creadores` y `clips` todavía tienen políticas atadas a `authenticated` (SELECT/UPDATE)
-del esquema original. **Migrarlas a `es_admin()` es bloqueante antes de cualquier
-login de creador**, o cada creador podría leer los emails y WhatsApps de todos.
+`creadores` y `clips` YA fueron migrados a `es_admin()` (M01, corrido el 2026-07-16;
+ver `db/creadores-clips-policies.sql`): hoy SELECT/UPDATE de ambas tablas solo lo
+puede el admin. Cuando se encienda el login de creadores habrá que AGREGAR una
+política extra `using (creador_id = auth.uid())` para que cada creador vea lo suyo
+(requiere una columna `creador_id` que aún no existe) — ampliar, no revertir.
 
 ### GOTCHA: escapar todo lo que venga de la DB
 El HTML se arma con template literals e `innerHTML`, y `creadores`/`clips` tienen
@@ -80,30 +82,29 @@ Los INSERT públicos deben usar `return=minimal`, es decir `supabase.from('...')
 
 ## Pendiente (Fase 2 y siguientes)
 
-### Acciones manuales en Supabase (SQL listo en `db/`, falta correrlo)
-Estos scripts ya están escritos y revisados; solo hay que ejecutarlos en el SQL
-Editor con la sesión del proyecto. Orden obligatorio:
-- [ ] **1. Crear el usuario admin** en Authentication -> Users -> Add user
-  (email `marlon@mvae.lat`). Bloquea todo lo demás: sin él no se entra al panel
-  ni sirve el SQL de abajo.
-- [ ] **2. Correr `db/campanas-policies.sql`.** Crea `usuarios_admin` + `es_admin()`
-  y da de alta al admin. Sin esto, crear/editar/pausar campañas falla con 42501.
-- [ ] **3. Correr `db/creadores-clips-policies.sql` (migración M01).** Ata SELECT/UPDATE
-  de `creadores`/`clips` a `es_admin()`. **Bloqueante antes de cualquier login de
-  creador.** Depende del paso 2 (usa `es_admin()`; el script aborta si no existe).
-- [ ] **4. Correr `db/gastado-trigger.sql`.** Trigger que mantiene `campanas.gastado`
-  sincronizado + backfill. Después de esto la columna `gastado` ya es confiable.
-- [ ] Verificar que `campanas.estado` acepte `'pausada'`. Si hay un CHECK constraint
-  que solo permita `'activa'`, el botón Pausar falla — no se pudo inspeccionar con
-  la publishable key. Query: `select conname, pg_get_constraintdef(oid) from pg_constraint where conrelid='public.campanas'::regclass;`
-- [ ] Limpiar filas de prueba (requiere admin/SQL, el público no puede borrar):
-  `delete from creadores where fuente in ('test-api','qa-kamaq');`
-  `delete from clips where link ilike '%qa.kamaq%';`
-  (la fila `qa-kamaq` y el clip QA se crearon en el test end-to-end del 2026-07-16.)
+### Setup de Supabase — HECHO y verificado (2026-07-16)
+Todo corrido en el SQL Editor con la sesión del proyecto. Estado final verificado:
+- [x] **Usuario admin creado** (`marlon@mvae.lat`, provider Email) en Authentication.
+- [x] **`db/campanas-policies.sql` corrido.** `usuarios_admin` + `es_admin()` creados,
+  admin dado de alta (`usuarios_admin` = 1 fila).
+- [x] **`db/creadores-clips-policies.sql` (M01) corrido.** `creadores` y `clips`
+  quedaron con 3 políticas c/u: INSERT público + SELECT/UPDATE atados a `es_admin()`.
+- [x] **`db/gastado-trigger.sql` corrido.** Trigger `clips_recompute_gastado` activo +
+  backfill hecho. La columna `campanas.gastado` ya es confiable.
+- [x] **BUG DE SEGURIDAD encontrado y corregido:** `campanas` tenía una política vieja
+  del esquema original llamada **`equipo gestiona campanas`** (ALL, `authenticated`,
+  `using true`) que dejaba escribir campañas a cualquier autenticado — la bomba de
+  tiempo descrita arriba, ya viva. Se borró. `campanas` quedó con 2 políticas:
+  `campanas_admin_write` (es_admin) + `ver campanas` (SELECT anon, discover). El
+  `drop` ya está agregado a `db/campanas-policies.sql` para futuras corridas limpias.
+- [x] **`campanas.estado` NO tiene CHECK constraint** → `'pausada'` es válido, el botón
+  Pausar funciona. (Único estado en uso hoy: `activa`.)
+- [x] **Filas de prueba QA limpiadas** (`fuente qa-kamaq`/`test-api` + clip QA).
 
 ### Resuelto en código (working tree)
 - [x] CRUD de campañas en el panel (crear/editar/pausar/activar + columna Gastado).
 - [x] Saneo del `href` de clips con `safeUrl()` (ya no pasa `javascript:`; solo https de TikTok/Instagram).
+- [x] Open Graph + `og.png` para preview al compartir el link.
 
 ### Producto / infra
 - [ ] Pagos: hoy es tracking manual. Automatizar pagos Yape/Plin.
