@@ -130,13 +130,22 @@ Plan completo en `docs/plan-fase2-login-creadores.md`. Decidido: login por **amb
   paginación server-side; Clips con filtro + paginación. En el mismo preview.
 - [ ] Edge Function anti-bot en el registro (necesita keys de Turnstile).
 
-### Handoff para el dev — anexar kamaq.lat (paso final, lo hace el dev)
-1. Vercel → proyecto **kamaq** → Settings → Domains → **Add Existing** → `kamaq.lat` (y `www.kamaq.lat`).
-2. En el registrador (DNS): `A @ → 76.76.21.21` y `CNAME www → cname.vercel-dns.com`
-   (o apuntar los nameservers a Vercel). Vercel muestra los valores exactos al agregar.
-3. Verificar estado *Valid* + SSL emitido. **Deployment Protection debe seguir OFF.**
-4. Al anexar: revertir `og:image`/`twitter:image` en index.html a `https://kamaq.lat/og.png`.
-   Los redirect URLs de Supabase ya incluyen `https://kamaq.lat/**`.
+### Dominio kamaq.lat — ANEXADO Y VIVO (2026-07-17)
+- [x] `kamaq.lat` (apex) + `www.kamaq.lat` anexados en Vercel, DNS en Namecheap
+  (A `@` → 216.198.79.1), estado **Valid** + SSL. **Canónico = `www.kamaq.lat`**
+  (el apex hace 308 → www, preservando el path/UTM).
+- [x] `og:image`/`twitter:image`/canonical/og:url apuntando a `https://www.kamaq.lat/`.
+- [x] **Producción despliega sola desde `main`** (la integración GitHub↔Vercel se
+  recuperó de la caída del 2026-07-16). Prod ya tiene login de creador + dashboard +
+  panel a escala. `kamaq.lat` está en los redirect URLs de Supabase.
+- Nota: si prefieren el apex como canónico en vez de www, se cambia el dominio
+  primario en Vercel → Domains (kamaq.lat como Production, www redirige).
+
+### Antes de prender los ads (pendiente)
+- [ ] **Resend (SMTP)** + verificar dominio (SPF/DKIM en Namecheap) → magic links
+  desde `@kamaq.lat` a inbox. Hoy usa el SMTP default de Supabase (limitado): el
+  login por **contraseña** funciona; el **magic link** solo aguanta pruebas.
+- [ ] **Turnstile + Edge Function** anti-bot en el registro (keys de Cloudflare).
 
 ### Producto / infra
 - [ ] Pagos: hoy es tracking manual. Automatizar pagos Yape/Plin.
