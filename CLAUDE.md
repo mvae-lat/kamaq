@@ -142,9 +142,14 @@ Plan completo en `docs/plan-fase2-login-creadores.md`. Decidido: login por **amb
   primario en Vercel → Domains (kamaq.lat como Production, www redirige).
 
 ### Antes de prender los ads (pendiente)
-- [ ] **Resend (SMTP)** + verificar dominio (SPF/DKIM en Namecheap) → magic links
-  desde `@kamaq.lat` a inbox. Hoy usa el SMTP default de Supabase (limitado): el
-  login por **contraseña** funciona; el **magic link** solo aguanta pruebas.
+- [~] **Resend (SMTP)** — cuenta creada (`marlon@mvae.lat`, workspace mvae). API key
+  "Supabase SMTP" (Sending access) creada. **SMTP conectado en Supabase**
+  (host `smtp.resend.com`, puerto 465, user `resend`, remitente `no-reply@kamaq.lat`,
+  sender "Kamaq"). Rate limit de correos subido a 100/h. **FALTA: verificar el dominio
+  `kamaq.lat` en Resend** — agregado (región sa-east-1), estado *Pending* esperando
+  DNS en Namecheap (DKIM `resend._domainkey`, MX `send`, SPF TXT `send`, DMARC `_dmarc`).
+  Hasta que verifique, el envío real no funciona (login por contraseña sí).
+  OJO: Resend free = 100 correos/día → para volumen de ads, Resend Pro.
 - [ ] **Turnstile + Edge Function** anti-bot en el registro (keys de Cloudflare).
 
 ### Producto / infra
