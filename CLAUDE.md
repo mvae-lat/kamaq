@@ -106,6 +106,21 @@ Todo corrido en el SQL Editor con la sesión del proyecto. Estado final verifica
 - [x] Saneo del `href` de clips con `safeUrl()` (ya no pasa `javascript:`; solo https de TikTok/Instagram).
 - [x] Open Graph + `og.png` para preview al compartir el link.
 
+### Fase 2 — Login de creadores (en progreso)
+Plan completo en `docs/plan-fase2-login-creadores.md`. Decidido: login por **ambos**
+(magic link + contraseña) y anti-bot **robusto** (Edge Function + Turnstile).
+- [x] **Capa de datos corrida** (`db/fase2-login-creadores.sql`, 2026-07-16):
+  `creadores.user_id` → auth.users; índices (estado/fuente/created/user + clips);
+  email único; trigger `on_auth_creador` (vincula/crea perfil al signup); guardia de
+  columnas (creador no cambia su estado → anti auto-aprobación); RLS por creador
+  (lee/edita lo propio; **clips: solo lectura, sin UPDATE = anti-fraude**);
+  RPC `funnel_creadores()` para métricas por UTM. `clips.creador_id` ya existía (FK a creadores.id).
+- [ ] Edge Function de registro + Turnstile (necesita keys de Cloudflare).
+- [ ] Resend como SMTP + SPF/DKIM en DNS de kamaq.lat (necesita cuenta Resend + dominio).
+- [ ] Supabase Pro antes del lanzamiento (billing).
+- [ ] Auth config: habilitar password + magic link, redirect/Site URLs a kamaq.lat.
+- [ ] Código index.html: UI login creador (ambos) + dashboard + wire clip→creador_id + panel a escala (paginación/filtros/funnel).
+
 ### Producto / infra
 - [ ] Pagos: hoy es tracking manual. Automatizar pagos Yape/Plin.
 - [ ] Tracking de vistas automático vía APIs de TikTok/Instagram (hoy se ingresan a mano).
