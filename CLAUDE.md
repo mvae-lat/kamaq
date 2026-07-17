@@ -118,8 +118,15 @@ Plan completo en `docs/plan-fase2-login-creadores.md`. Decidido: login por **amb
 - [ ] Edge Function de registro + Turnstile (necesita keys de Cloudflare).
 - [ ] Resend como SMTP + SPF/DKIM en DNS de kamaq.lat (necesita cuenta Resend + dominio).
 - [ ] Supabase Pro antes del lanzamiento (billing).
-- [ ] Auth config: habilitar password + magic link, redirect/Site URLs a kamaq.lat.
-- [ ] Código index.html: UI login creador (ambos) + dashboard + wire clip→creador_id + panel a escala (paginación/filtros/funnel).
+- [ ] Auth config: habilitar password + magic link, redirect/Site URLs (agregar la
+  URL del deploy + kamaq.lat), y "Confirm email" según se decida. **Bloquea el login
+  por email en el sitio en vivo.**
+- [x] **Código: login de creador (magic link + password) + dashboard** (balance hero,
+  stat-cards, mis clips, editar perfil) + wire clip→creador_id + panel de marca
+  rechaza no-admins. Probado local (sin errores, dashboard renderiza). Desplegado a
+  PREVIEW (no a prod): el login por email necesita la Auth config de arriba primero.
+- [ ] Panel de marca a escala: paginación + filtros + funnel por UTM (`funnel_creadores()`).
+- [ ] Edge Function anti-bot en el registro (necesita keys de Turnstile).
 
 ### Producto / infra
 - [ ] Pagos: hoy es tracking manual. Automatizar pagos Yape/Plin.
