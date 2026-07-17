@@ -125,8 +125,18 @@ Plan completo en `docs/plan-fase2-login-creadores.md`. Decidido: login por **amb
   stat-cards, mis clips, editar perfil) + wire clip→creador_id + panel de marca
   rechaza no-admins. Probado local (sin errores, dashboard renderiza). Desplegado a
   PREVIEW (no a prod): el login por email necesita la Auth config de arriba primero.
-- [ ] Panel de marca a escala: paginación + filtros + funnel por UTM (`funnel_creadores()`).
+- [x] **Panel de marca a escala** (probado local): tab "Resumen" con funnel por UTM
+  (`funnel_creadores()`) + stat-cards; Creadores con filtro por estado/búsqueda +
+  paginación server-side; Clips con filtro + paginación. En el mismo preview.
 - [ ] Edge Function anti-bot en el registro (necesita keys de Turnstile).
+
+### Handoff para el dev — anexar kamaq.lat (paso final, lo hace el dev)
+1. Vercel → proyecto **kamaq** → Settings → Domains → **Add Existing** → `kamaq.lat` (y `www.kamaq.lat`).
+2. En el registrador (DNS): `A @ → 76.76.21.21` y `CNAME www → cname.vercel-dns.com`
+   (o apuntar los nameservers a Vercel). Vercel muestra los valores exactos al agregar.
+3. Verificar estado *Valid* + SSL emitido. **Deployment Protection debe seguir OFF.**
+4. Al anexar: revertir `og:image`/`twitter:image` en index.html a `https://kamaq.lat/og.png`.
+   Los redirect URLs de Supabase ya incluyen `https://kamaq.lat/**`.
 
 ### Producto / infra
 - [ ] Pagos: hoy es tracking manual. Automatizar pagos Yape/Plin.
