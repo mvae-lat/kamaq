@@ -134,8 +134,14 @@
   .note{background:#ff5a2c10;border:1px solid #ff5a2c33;border-radius:14px;padding:13px 17px;font-size:13px;color:#b23c14;margin-top:18px;font-weight:500}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#17130e;color:#fff;padding:13px 22px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:var(--shadow-lg);z-index:200;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  /* creador dashboard */
+  .bhero{background:var(--grad);color:#fff;border-radius:var(--radius);padding:24px 26px;box-shadow:var(--shadow-lg)}
+  .bhero .lbl{font-size:13px;font-weight:700;opacity:.92}
+  .bhero .amt{font-size:46px;font-weight:900;letter-spacing:-.035em;line-height:1;margin-top:6px}
+  .bhero .chip{display:inline-flex;align-items:center;gap:6px;background:#ffffff26;border:1px solid #ffffff40;color:#fff;font-size:12.5px;font-weight:700;padding:6px 13px;border-radius:999px;margin-top:14px}
+  .crow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.hero h1{font-size:44px}.nav-links{display:none}}
-  @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2{grid-template-columns:1fr}}
+  @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2,.crow{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -146,6 +152,7 @@
     <div class="nav-links" id="navCreator">
       <a onclick="go('discover')">Campañas</a>
       <a onclick="go('home')">Cómo funciona</a>
+      <a onclick="go('creador')">Mi panel</a>
     </div>
     <div class="nav-links" id="navBrand" style="display:none">
       <a onclick="go('brand')">Panel</a>
@@ -203,6 +210,9 @@
 <!-- CAMPAIGN DETAIL -->
 <section class="view" id="campaign"><div class="wrap" id="campDetail"></div></section>
 
+<!-- CREADOR (login o dashboard) -->
+<section class="view" id="creador"><div class="wrap" id="creadorRoot"></div></section>
+
 <!-- BRAND (login o panel) -->
 <section class="view" id="brand"><div class="wrap" id="brandRoot"></div></section>
 
@@ -215,6 +225,7 @@
 const SB_URL='https://glyjniopfjwvmfosvlsn.supabase.co';
 const SB_KEY='sb_publishable_fIRJ5hQTdNe2t_j1QVqdCg_hyGQSJFu';
 const sb=supabase.createClient(SB_URL,SB_KEY);
+const _magicReturn=/access_token|type=(magiclink|recovery|signup)/.test(location.hash);
 
 /* ===== HELPERS ===== */
 const money=n=>'S/ '+Number(n||0).toLocaleString('es-PE',{minimumFractionDigits:2,maximumFractionDigits:2});
@@ -237,7 +248,7 @@ function setRole(r){
   document.getElementById('navCreator').style.display=r==='creator'?'flex':'none';
   document.getElementById('navBrand').style.display=r==='brand'?'flex':'none';
   const cta=document.getElementById('navCta');
-  if(r==='creator'){cta.style.display='';cta.setAttribute('onclick',"go('register')");go('home');}
+  if(r==='creator'){cta.style.display='';updateNavCta();go('home');}
   else{cta.style.display='none';go('brand');}
 }
 function go(view,arg){
@@ -247,6 +258,7 @@ function go(view,arg){
   if(view==='discover')renderCamps();
   if(view==='register'){regStep=1;regData={};renderReg();}
   if(view==='brand')renderBrand();
+  if(view==='creador')renderCreador();
 }
 
 /* ===== CAMPAÑAS (desde DB) ===== */
@@ -301,7 +313,10 @@ async function submitClip(campId,plat){
   const link=document.getElementById('clip_link').value.trim();
   if(!link){toast('Pega el link de tu video');return;}
   const btn=document.getElementById('clipBtn');btn.disabled=true;btn.textContent='Enviando…';
-  const {error}=await sb.from('clips').insert({campana_id:campId,link,plataforma:plat,estado:'revision'});
+  let cid=null;
+  const {data:se}=await sb.auth.getSession();
+  if(se.session){ if(!creadorRow){const {data}=await sb.from('creadores').select('id').eq('user_id',se.session.user.id).maybeSingle();creadorRow=data;} cid=creadorRow?creadorRow.id:null; }
+  const {error}=await sb.from('clips').insert({campana_id:campId,link,plataforma:plat,estado:'revision',creador_id:cid});
   if(error){btn.disabled=false;btn.textContent='Enviar para revisión';toast('Error al enviar. Intenta de nuevo.');return;}
   btn.textContent='✓ Enviado';toast('¡Clip enviado! Entrará a revisión.');
 }
@@ -388,6 +403,10 @@ async function renderBrand(){
       <div class="note">¿Aún no tienes usuario de equipo? Se crea en Supabase → Authentication → Add user.</div>
     </div></div>`;return;
   }
+  const {data:isAdmin}=await sb.rpc('es_admin');
+  if(!isAdmin){
+    root.innerHTML=`<div class="authwrap"><div class="authcard"><div class="eyebrow">Panel interno · Kamaq</div><h2>Solo para el equipo</h2><div class="subt">Tu cuenta (${esc(session.user.email)}) no tiene acceso al panel de marca.</div><button class="btn accent wide" style="margin-top:18px" onclick="setRole('creator');go('creador')">Ir a mi panel de creador</button><div class="note" style="margin-top:14px"><a style="cursor:pointer;font-weight:700" onclick="logout()">Cerrar sesión</a></div></div></div>`;return;
+  }
   root.innerHTML=`<div class="page-head"><h2>Panel interno</h2><p>${session.user.email} · <a style="color:var(--accent);cursor:pointer;font-weight:700" onclick="logout()">salir</a></p></div>
     <div class="subnav"><button id="tb_creators" onclick="setBrandTab('creators')">Creadores</button><button id="tb_clips" onclick="setBrandTab('clips')">Clips + Vistas</button><button id="tb_camps" onclick="setBrandTab('camps')">Campañas</button></div>
     <div id="brandBody" style="margin-top:16px"><p class="muted">Cargando…</p></div>`;
@@ -402,6 +421,129 @@ async function login(){
   renderBrand();
 }
 async function logout(){await sb.auth.signOut();renderBrand();}
+
+/* ===== CREADOR (login + dashboard) ===== */
+let creadorSession=null,creadorRow=null;
+async function updateNavCta(){
+  const cta=document.getElementById('navCta');if(!cta)return;
+  const {data}=await sb.auth.getSession();
+  if(data.session){cta.textContent='Mi panel';cta.setAttribute('onclick',"go('creador')");}
+  else{cta.textContent='Registrarme';cta.setAttribute('onclick',"go('register')");}
+}
+function creadorLoginHTML(){
+  return `<div class="authwrap"><div class="authcard">
+    <div class="eyebrow">Kamaq · Creadores</div><h2>Entra a tu panel</h2><div class="subt">Mira tu estado, tus clips y lo que llevas ganado.</div>
+    <label class="f">Email</label><input class="f" id="cl_email" placeholder="tucorreo@email.com">
+    <button class="btn ghost wide" id="cmlBtn" style="margin-top:12px" onclick="creadorMagicLink()">Enviarme un link de acceso ✉️</button>
+    <div style="text-align:center;color:var(--mut2);font-size:12px;margin:16px 0;font-weight:700">— o con contraseña —</div>
+    <input class="f" id="cl_pass" type="password" placeholder="Tu contraseña">
+    <div class="ferr" id="cl_err">Email o contraseña incorrectos</div>
+    <div style="display:flex;gap:10px;margin-top:12px">
+      <button class="btn accent" style="flex:1" id="clBtn" onclick="creadorLogin()">Ingresar</button>
+      <button class="btn ghost" style="flex:1" id="csBtn" onclick="creadorSignup()">Crear cuenta</button>
+    </div>
+    <div class="note" style="margin-top:16px">¿Primera vez? <a style="cursor:pointer;font-weight:700" onclick="go('register')">Regístrate como creador</a> y luego entra acá.</div>
+  </div></div>`;
+}
+async function renderCreador(){
+  const {data}=await sb.auth.getSession();creadorSession=data.session;updateNavCta();
+  const root=document.getElementById('creadorRoot');
+  if(!creadorSession){root.innerHTML=creadorLoginHTML();return;}
+  const {data:cr}=await sb.from('creadores').select('*').eq('user_id',creadorSession.user.id).maybeSingle();
+  creadorRow=cr;
+  if(!cr){root.innerHTML=`<div class="authwrap"><div class="authcard"><div class="eyebrow">Kamaq</div><h2>Completa tu registro</h2><div class="subt">Tu cuenta (${esc(creadorSession.user.email)}) todavía no tiene perfil de creador.</div><button class="btn accent wide" style="margin-top:18px" onclick="go('register')">Registrarme como creador</button><div class="note" style="margin-top:14px"><a style="cursor:pointer;font-weight:700" onclick="logoutCreador()">Cerrar sesión</a></div></div></div>`;return;}
+  root.innerHTML='<p class="muted">Cargando tu panel…</p>';
+  await renderCreadorDash();
+}
+async function renderCreadorDash(){
+  const root=document.getElementById('creadorRoot');
+  const {data:clips,error}=await sb.from('clips').select('*, campanas(titulo,marca,tarifa_1k)').eq('creador_id',creadorRow.id).order('created_at',{ascending:false});
+  if(error){root.innerHTML='<p class="muted">Error al cargar tu panel.</p>';console.error(error);return;}
+  const list=clips||[];
+  const pay=c=>(c.vistas||0)/1000*(c.campanas?.tarifa_1k||0);
+  const disponible=list.filter(c=>c.estado==='aprobado'||c.estado==='pagando').reduce((a,c)=>a+pay(c),0);
+  const ganado=list.filter(c=>['aprobado','pagando','pagado'].includes(c.estado)).reduce((a,c)=>a+pay(c),0);
+  const vistasTot=list.reduce((a,c)=>a+(c.vistas||0),0);
+  const aprob=list.filter(c=>['aprobado','pagando','pagado'].includes(c.estado)).length;
+  const revis=list.filter(c=>c.estado==='revision').length;
+  const e=creadorRow.estado;
+  const eb=(e==='aprobado'||e==='activo')?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pausado'?'<span class="badge b-warn">Pausado</span>':'<span class="badge b-new">En revisión</span>';
+  root.innerHTML=`
+  <div class="page-head" style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px">
+    <div><h2>Hola, ${esc(creadorRow.nombre||'creador')} 👋</h2><p>${esc(creadorSession.user.email)} · <a style="color:var(--accent);cursor:pointer;font-weight:700" onclick="logoutCreador()">salir</a></p></div>
+    <div style="padding-top:6px">${eb}</div>
+  </div>
+  ${e==='nuevo'?'<div class="note">Tu cuenta está en revisión. Te contactaremos por WhatsApp para aprobarte y asignarte campañas.</div>':''}
+  <div class="bhero" style="margin-top:16px">
+    <div class="lbl">Disponible para cobrar</div>
+    <div class="amt">${money(disponible)}</div>
+    <span class="chip">💸 Pagos por Yape / Plin en 24h</span>
+  </div>
+  <div class="cards4" style="margin-top:16px">
+    <div class="mcard"><div class="t">Vistas totales</div><div class="v">${kviews(vistasTot)}</div></div>
+    <div class="mcard"><div class="t">Ganado histórico</div><div class="v">${money(ganado)}</div></div>
+    <div class="mcard"><div class="t">Clips aprobados</div><div class="v">${aprob}</div></div>
+    <div class="mcard"><div class="t">En revisión</div><div class="v">${revis}</div></div>
+  </div>
+  <div class="sec-head" style="margin:26px 0 12px"><div><h2 style="font-size:22px">Mis clips</h2></div><button class="btn sm accent" onclick="go('discover')">+ Enviar un clip</button></div>
+  ${list.length?`<div class="panel" style="padding:0;overflow:hidden"><table>
+    <thead><tr><th>Campaña</th><th>Vistas</th><th>A cobrar</th><th>Estado</th><th>Link</th></tr></thead>
+    <tbody>${list.map(c=>{const u=safeUrl(c.link);return `<tr>
+      <td style="font-weight:600">${esc(c.campanas?c.campanas.titulo:'—')}<div class="muted" style="font-size:12px;font-weight:500">${esc(c.campanas?c.campanas.marca:'')}</div></td>
+      <td>${kviews(c.vistas)}</td>
+      <td style="font-weight:800">${money(pay(c))}</td>
+      <td>${ebadge(c.estado)}</td>
+      <td>${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">ver ↗</a>`:'<span class="muted">—</span>'}</td>
+    </tr>`;}).join('')}</tbody></table></div>`:'<div class="panel"><p class="muted">Aún no enviaste clips. Elige una campaña y sube tu primer clip para empezar a ganar.</p></div>'}
+  <div class="sec-head" style="margin:26px 0 12px"><h2 style="font-size:22px">Mi perfil</h2></div>
+  <div class="panel">
+    <label class="f">Nombre</label><input class="f" id="cp_nombre" value="${esc(creadorRow.nombre)}">
+    <div class="crow" style="margin-top:2px">
+      <div><label class="f">WhatsApp</label><input class="f" id="cp_wsp" value="${esc(creadorRow.whatsapp)}"></div>
+      <div><label class="f">Ciudad</label><input class="f" id="cp_city" value="${esc(creadorRow.ciudad)}"></div>
+    </div>
+    <div class="crow">
+      <div><label class="f">TikTok</label><input class="f" id="cp_tt" value="${esc(creadorRow.tiktok)}" placeholder="@usuario"></div>
+      <div><label class="f">Instagram</label><input class="f" id="cp_ig" value="${esc(creadorRow.instagram)}" placeholder="@usuario"></div>
+    </div>
+    <button class="btn accent" id="cpBtn" style="margin-top:14px" onclick="saveCreatorProfile()">Guardar cambios</button>
+  </div>`;
+}
+async function creadorMagicLink(){
+  const email=document.getElementById('cl_email').value.trim();
+  if(!email){toast('Escribe tu email');return;}
+  const btn=document.getElementById('cmlBtn');btn.disabled=true;btn.textContent='Enviando…';
+  const {error}=await sb.auth.signInWithOtp({email,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(error){btn.disabled=false;btn.textContent='Enviarme un link de acceso ✉️';toast('No se pudo enviar. Intenta de nuevo.');console.error(error);return;}
+  btn.textContent='✓ Revisa tu correo';toast('Te enviamos un link a '+email+'. Ábrelo para entrar.');
+}
+async function creadorLogin(){
+  const email=document.getElementById('cl_email').value.trim();
+  const pass=document.getElementById('cl_pass').value;
+  const btn=document.getElementById('clBtn');btn.disabled=true;btn.textContent='Ingresando…';
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  if(error){document.getElementById('cl_err').classList.add('show');btn.disabled=false;btn.textContent='Ingresar';return;}
+  renderCreador();
+}
+async function creadorSignup(){
+  const email=document.getElementById('cl_email').value.trim();
+  const pass=document.getElementById('cl_pass').value;
+  if(!email||pass.length<6){toast('Email y una contraseña de 6+ caracteres');return;}
+  const btn=document.getElementById('csBtn');btn.disabled=true;btn.textContent='Creando…';
+  const {data,error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:location.origin+location.pathname}});
+  if(error){btn.disabled=false;btn.textContent='Crear cuenta';toast(error.message||'No se pudo crear la cuenta');return;}
+  if(data.session){renderCreador();}
+  else{btn.textContent='✓ Revisa tu correo';toast('Cuenta creada. Confirma tu email para entrar.');}
+}
+async function logoutCreador(){await sb.auth.signOut();creadorRow=null;creadorSession=null;renderCreador();}
+async function saveCreatorProfile(){
+  const btn=document.getElementById('cpBtn');btn.disabled=true;btn.textContent='Guardando…';
+  const upd={nombre:document.getElementById('cp_nombre').value.trim(),whatsapp:document.getElementById('cp_wsp').value.trim(),ciudad:document.getElementById('cp_city').value.trim(),tiktok:document.getElementById('cp_tt').value.trim()||null,instagram:document.getElementById('cp_ig').value.trim()||null};
+  const {error}=await sb.from('creadores').update(upd).eq('user_id',creadorSession.user.id);
+  btn.disabled=false;btn.textContent='Guardar cambios';
+  if(error){toast('No se pudo guardar');console.error(error);return;}
+  creadorRow={...creadorRow,...upd};toast('Perfil actualizado ✓');
+}
 function setBrandTab(t){
   brandTab=t;['creators','clips','camps'].forEach(x=>{const b=document.getElementById('tb_'+x);if(b)b.classList.toggle('on',x===t);});
   if(t==='creators')loadCreators();if(t==='clips')loadClips();if(t==='camps')loadBrandCamps();
@@ -618,7 +760,15 @@ async function toggleCampEstado(id){
 }
 
 /* ===== INIT ===== */
+sb.auth.onAuthStateChange((event,sess)=>{
+  session=sess;creadorSession=sess;updateNavCta();
+  const active=document.querySelector('.view.active');
+  if(active&&active.id==='creador')renderCreador();
+  if(active&&active.id==='brand')renderBrand();
+});
 loadCamps();
+updateNavCta();
+if(_magicReturn){setRole('creator');go('creador');}
 </script>
 </body>
 </html>
