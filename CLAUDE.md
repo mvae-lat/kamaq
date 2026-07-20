@@ -165,16 +165,21 @@ código está en `index.html` y probado en local (sin errores de consola).
   (aprobación/pago) en Creadores y Por pagar. Es la vía manual real para Perú; no
   depende de la verificación del dominio en Resend.
 
-**FALTA CORRER (una vez, SQL Editor):** `db/pagos.sql` — agrega `clips.pagado_at` y
-`clips.pago_ref` (auditoría del desembolso). El panel ya marca `pagado` sin esto (hace
-fallback a solo-estado), pero sin las columnas no queda el sello de fecha del pago.
+**HECHO (2026-07-20, desplegado y aplicado en prod):**
+- [x] **`db/pagos.sql` corrido** en el SQL Editor. `clips.pagado_at` + `clips.pago_ref`
+  + índice `idx_clips_pagado_at` creados. El panel ya sella la fecha de cada pago.
+- [x] **Deploy a prod** (`main` → Vercel, commit `23a56f3`). Todo lo de arriba está vivo
+  en `www.kamaq.lat`.
+- [x] **Supabase Auth configurado:** provider Email habilitado; **"Confirm email" = OFF**
+  (temporal, para que el onboarding con contraseña funcione sin Resend — volver a ON
+  cuando Resend verifique el dominio). **Site URL** corregido a `https://www.kamaq.lat`
+  (antes apuntaba a la URL muerta `kamaq.vercel.app`). **Redirect URLs** ahora incluyen
+  `https://www.kamaq.lat/**` (el canónico; antes solo estaba el apex `kamaq.lat/**`).
 
-**DEPENDE DE CONFIG DE SUPABASE AUTH (bloquea el login por email/onboarding en vivo):**
-habilitar el provider Email (password) y decidir "Confirm email". Como Resend aún no
-verifica el dominio, si "Confirm email" está **ON** los correos de confirmación no salen
-y el creador no puede confirmar → recomendación: dejar "Confirm email" **OFF**
-temporalmente para que el onboarding con contraseña funcione ya, y volver a ON cuando
-Resend verifique. Agregar la URL del deploy + `kamaq.lat` a los redirect/Site URLs.
+**OJO — sigue bloqueado el envío de correos** hasta verificar el dominio en **Resend**
+(DNS en Namecheap). Sin eso, magic link / recuperación de contraseña / confirmación no
+salen. El **onboarding con contraseña sí funciona** (no manda correo). Cuando Resend
+verifique: subir DNS, y volver "Confirm email" a ON si se quiere exigir verificación.
 
 ### Dominio kamaq.lat — ANEXADO Y VIVO (2026-07-17)
 - [x] `kamaq.lat` (apex) + `www.kamaq.lat` anexados en Vercel, DNS en Namecheap
