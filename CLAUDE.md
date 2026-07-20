@@ -176,10 +176,15 @@ código está en `index.html` y probado en local (sin errores de consola).
   (antes apuntaba a la URL muerta `kamaq.vercel.app`). **Redirect URLs** ahora incluyen
   `https://www.kamaq.lat/**` (el canónico; antes solo estaba el apex `kamaq.lat/**`).
 
-**OJO — sigue bloqueado el envío de correos** hasta verificar el dominio en **Resend**
-(DNS en Namecheap). Sin eso, magic link / recuperación de contraseña / confirmación no
-salen. El **onboarding con contraseña sí funciona** (no manda correo). Cuando Resend
-verifique: subir DNS, y volver "Confirm email" a ON si se quiere exigir verificación.
+**RESEND FUNCIONANDO (2026-07-20):** dominio `kamaq.lat` **Verified** en Resend
+(sa-east-1), DNS (DKIM/SPF/MX/DMARC) ya en Namecheap. SMTP de Supabase apuntando a
+`smtp.resend.com:465`, user `resend`, remitente `no-reply@kamaq.lat`. **El API key
+viejo estaba mal/ausente en el campo Password → causaba 500 "Error sending magic link";
+se generó un key nuevo ("Supabase SMTP kamaq", Sending) y se pegó.** Probado de punta a
+punta: magic link a marlon@mvae.lat → Resend = **Delivered**. Ya salen magic link /
+recuperación / confirmación. Nota: "Confirm email" sigue en **OFF** (onboarding sin
+fricción); ahora que el correo funciona, se puede volver a ON si se quiere exigir
+verificación. Free tier Resend = 100 correos/día → Pro para volumen de ads.
 
 ### Dominio kamaq.lat — ANEXADO Y VIVO (2026-07-17)
 - [x] `kamaq.lat` (apex) + `www.kamaq.lat` anexados en Vercel, DNS en Namecheap
