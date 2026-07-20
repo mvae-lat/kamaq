@@ -150,6 +150,18 @@
   .payhint{font-size:13px;color:var(--mut2);font-weight:500}
   .wa{display:inline-flex;align-items:center;gap:5px;color:#12a150;font-weight:800;font-size:13px;text-decoration:none;white-space:nowrap}
   .wa:hover{text-decoration:underline}
+  /* calculadora de ganancias del hero (money-forward, estilo Content Rewards) */
+  .calc{max-width:430px;margin:34px auto 0;background:var(--card);border:1px solid var(--border);border-radius:22px;padding:22px 26px;box-shadow:var(--shadow-lg);text-align:center}
+  .calc .lbl{font-size:14px;color:var(--mut2);font-weight:600}.calc .lbl b{color:var(--txt)}
+  .calc .amt{font-size:46px;font-weight:900;letter-spacing:-.035em;line-height:1;margin:6px 0 16px}
+  .calc input[type=range]{width:100%;accent-color:var(--accent);height:6px;cursor:pointer}
+  .calc .foot{font-size:12px;color:var(--mut2);font-weight:600;margin-top:12px}
+  /* franja de confianza (reduce fricción de tráfico frío) */
+  .trust{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:36px}
+  .trust .t{display:inline-flex;align-items:center;gap:7px;background:var(--card);border:1px solid var(--border);border-radius:999px;padding:9px 16px;font-size:13px;font-weight:700;box-shadow:var(--shadow)}
+  /* badge de tarifa sobre el cover + gancho de ganancia en la card */
+  .camp .cover .ratebadge{position:absolute;top:12px;right:12px;background:#fffffff2;color:var(--txt);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.18)}
+  .camp .earn{font-size:12.5px;font-weight:800;color:var(--good);margin-top:-4px}
   @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.hero h1{font-size:44px}.nav-links{display:none}}
   @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2,.crow{grid-template-columns:1fr}}
 </style>
@@ -186,6 +198,12 @@
       <button class="btn accent" onclick="go('register')">Empieza a ganar hoy</button>
       <button class="btn ghost" onclick="go('discover')">Ver campañas</button>
     </div>
+    <div class="calc">
+      <div class="lbl">Si tu clip logra <b id="calcV">100,000</b> vistas, ganas</div>
+      <div class="amt grad-txt" id="calcOut">S/ 80.00</div>
+      <input type="range" id="calcRange" min="10000" max="1000000" step="10000" value="100000" oninput="updCalc()" aria-label="Vistas de tu clip">
+      <div class="foot">A S/ <span id="calcRate">0.80</span> por 1,000 vistas · pago por Yape / Plin en 24h</div>
+    </div>
   </div></div>
   <div class="wrap"><div class="stats">
     <div class="stat"><div class="n grad-txt">S/ 0.80</div><div class="l">pago por cada 1,000 vistas</div></div>
@@ -200,6 +218,11 @@
       <div class="step"><div class="k">1</div><h3>Regístrate gratis</h3><p>Cuéntanos de ti y tus redes. En minutos accedes a las campañas activas.</p></div>
       <div class="step"><div class="k">2</div><h3>Postea tu clip</h3><p>Elige una campaña, graba desde tu cuenta de TikTok o Instagram y sube el link.</p></div>
       <div class="step"><div class="k">3</div><h3>Cobra por vistas</h3><p>Trackeamos tus vistas y pagamos por Yape o Plin. Más viral = más ganas.</p></div>
+    </div>
+    <div class="trust">
+      <span class="t">💸 Pago en 24h por Yape / Plin</span>
+      <span class="t">🆓 0% de comisión para ti</span>
+      <span class="t">👁️ Solo vistas orgánicas verificadas</span>
     </div>
   </div></div>
   <div class="band" style="border:none;padding-top:20px"><div class="wrap">
@@ -282,10 +305,22 @@ function go(view,arg){
 }
 
 /* ===== CAMPAÑAS (desde DB) ===== */
+/* Calculadora de ganancias del hero: vistas (slider) → S/. */
+function updCalc(){
+  const r=document.getElementById('calcRange');if(!r)return;
+  const v=parseInt(r.value)||0;
+  const rate=parseFloat(document.getElementById('calcRate').textContent)||0.80;
+  document.getElementById('calcV').textContent=v.toLocaleString('es-PE');
+  document.getElementById('calcOut').textContent=money(v/1000*rate);
+}
 async function loadCamps(){
   const {data,error}=await sb.from('campanas').select('*').eq('estado','activa').order('created_at',{ascending:true});
   if(error){console.error(error);document.getElementById('connState').textContent='sin conexión';return;}
   CAMPS=data||[];
+  /* Ancla la calculadora a la mejor tarifa activa real (el gancho más atractivo). */
+  const maxRate=CAMPS.reduce((m,c)=>Math.max(m,Number(c.tarifa_1k)||0),0)||0.80;
+  const cr=document.getElementById('calcRate');
+  if(cr){cr.textContent=maxRate.toFixed(2);updCalc();}
   document.getElementById('connState').textContent='conectado ✓ · '+CAMPS.length+' campañas';
   const home=document.getElementById('homeCamps');
   home.innerHTML=CAMPS.slice(0,3).map((c,i)=>campCard(c,i)).join('')||'<p class="muted">Aún no hay campañas.</p>';
@@ -293,10 +328,13 @@ async function loadCamps(){
 }
 function campCard(c,i){
   return `<div class="camp" onclick="openCampaign('${c.id}')">
-    <div class="cover" style="background:${gradFor(i)}"><div class="who"><span class="ic" style="background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span> ${esc(c.marca)}</div></div>
+    <div class="cover" style="background:${gradFor(i)}">
+      <span class="ratebadge">${money(c.tarifa_1k)} / 1K</span>
+      <div class="who"><span class="ic" style="background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span> ${esc(c.marca)}</div></div>
     <div class="body"><h3>${esc(c.titulo)}</h3>
       <div class="rate">${money(c.tarifa_1k)} <span>/ 1,000 vistas</span></div>
-      <div class="metaline">${esc(c.categoria)} · Presupuesto ${money(c.presupuesto)}</div>
+      <div class="earn">💰 Ganas ${money((c.tarifa_1k||0)*100)} por cada 100K vistas</div>
+      <div class="metaline">${esc(c.categoria)}</div>
       <div class="meta"><span class="badge b-info">${esc(c.plataforma)}</span><span class="badge b-good">Activa</span></div>
     </div></div>`;
 }
