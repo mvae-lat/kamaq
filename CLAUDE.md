@@ -71,8 +71,11 @@ Los INSERT públicos deben usar `return=minimal`, es decir `supabase.from('...')
 - Discover: lee `campanas` activas.
 - Detalle de campaña + enviar clip -> insert en `clips`.
 - Panel de marca (login por Supabase Auth):
-  - Creadores: aprobar / rechazar.
-  - Clips + Vistas: editar vistas (recalcula el pago = vistas/1000 * tarifa_1k), aprobar / rechazar.
+  - Creadores: aprobar / rechazar / pausar / reabrir + contacto por WhatsApp.
+  - Clips + Vistas: editar vistas (recalcula el pago = vistas/1000 * tarifa_1k) y ciclo
+    de vida completo (revisión → aprobado → pagado, con reversa).
+  - Por pagar: clips aprobados agrupados por creador, total S/, WhatsApp/Yape y
+    "Marcar pagado" en bloque (tablero de desembolso).
   - Campañas: listado + crear (formulario inline) + editar + pausar/activar, y
     columna Gastado/Presupuesto derivada de los clips. Pausar saca la campaña del
     discover porque `loadCamps()` filtra por `estado='activa'`.
@@ -129,6 +132,49 @@ Plan completo en `docs/plan-fase2-login-creadores.md`. Decidido: login por **amb
   (`funnel_creadores()`) + stat-cards; Creadores con filtro por estado/búsqueda +
   paginación server-side; Clips con filtro + paginación. En el mismo preview.
 - [ ] Edge Function anti-bot en el registro (necesita keys de Turnstile).
+
+### Fase 2 — Sistema de pagos + cierre de huecos UX (2026-07-20)
+Revisión UX de punta a punta + investigación del rubro (Whop Content Rewards,
+ContentRewards, SideShift, ClipAffiliates). Modelo confirmado del sector: CPM por
+1,000 vistas verificadas, mínimo de pago por creador, ventana de revisión antes de
+pagar, verificación de vistas por API (Kamaq: manual por ahora) y anti-bot. Todo el
+código está en `index.html` y probado en local (sin errores de consola).
+
+- [x] **Sistema de pagos en el panel.** Ciclo de vida completo del clip con reversa:
+  `revisión → aprobado → pagado` (+ Rechazar/Reabrir/Revertir). Nueva pestaña
+  **"Por pagar"** (`loadPayouts()`): agrupa los clips aprobados **por creador**, muestra
+  total S/, su número Yape/WhatsApp (link `wa.me` con el monto pre-armado) y un botón
+  **"Marcar pagado"** (`payCreator()`) que mueve en bloque sus clips a `pagado`. Este
+  es el tablero operativo del desembolso: pagas por Yape/Plin y marcas. Antes NO existía
+  forma de registrar un pago (los estados `pagando/pagado` estaban en el modelo pero sin
+  botón). El helper `waLink()` normaliza el número a `+51` (Yape va atado al celular).
+- [x] **Clips huérfanos cerrados.** `submitClip()` ahora exige sesión de creador antes de
+  enviar (si no, manda a login/registro) y valida el link con `safeUrl()`. Ya no entran
+  clips con `creador_id=null` (no se podían pagar ni contactar). La pestaña Por pagar
+  avisa si quedan huérfanos legacy.
+- [x] **Onboarding unificado.** El registro de 3 pasos ahora crea también la cuenta Auth
+  (email + **contraseña**, nuevo campo en el paso 3). El trigger `on_auth_creador`
+  vincula el perfil por email. Si hay sesión inmediata → dashboard; si no → pantalla
+  "revisa tu correo". Antes el registro creaba un perfil SIN login y el creador no podía
+  entrar a su panel. Maneja email duplicado (→ login).
+- [x] **Dashboard del creador:** barra de progreso a `MIN_VISTAS_COBRO` (10,000) para el
+  primer cobro + mensajes por estado (nuevo/rechazado/pausado).
+- [x] **Panel responsive:** todas las tablas usan `.tablecard` (scroll horizontal en
+  mobile en vez de romperse). Contacto por WhatsApp también en la pestaña Creadores.
+- [x] **Notificación al creador SIN Resend:** links `wa.me` con mensaje pre-armado
+  (aprobación/pago) en Creadores y Por pagar. Es la vía manual real para Perú; no
+  depende de la verificación del dominio en Resend.
+
+**FALTA CORRER (una vez, SQL Editor):** `db/pagos.sql` — agrega `clips.pagado_at` y
+`clips.pago_ref` (auditoría del desembolso). El panel ya marca `pagado` sin esto (hace
+fallback a solo-estado), pero sin las columnas no queda el sello de fecha del pago.
+
+**DEPENDE DE CONFIG DE SUPABASE AUTH (bloquea el login por email/onboarding en vivo):**
+habilitar el provider Email (password) y decidir "Confirm email". Como Resend aún no
+verifica el dominio, si "Confirm email" está **ON** los correos de confirmación no salen
+y el creador no puede confirmar → recomendación: dejar "Confirm email" **OFF**
+temporalmente para que el onboarding con contraseña funcione ya, y volver a ON cuando
+Resend verifique. Agregar la URL del deploy + `kamaq.lat` a los redirect/Site URLs.
 
 ### Dominio kamaq.lat — ANEXADO Y VIVO (2026-07-17)
 - [x] `kamaq.lat` (apex) + `www.kamaq.lat` anexados en Vercel, DNS en Namecheap

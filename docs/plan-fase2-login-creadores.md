@@ -381,6 +381,39 @@ ataca los cuatro.
 
 ---
 
+## 9bis. UX del dashboard del creador (revisión de referencias · 2026-07-16)
+
+Referencias revisadas: **sideshift.app**, **8x.social**, **contentrewards.com**
+(las 3 son plataformas de clipping/UGC-rewards, mismo rubro que Kamaq).
+
+**Content Rewards** — casi gemelo de Kamaq (naranja + crema, botones pill, CTA
+"Start Earning Today"). Patrones clave:
+- El **número héroe del creador = su dinero**: "Balance Overview → Available to pay
+  out $2,000.00" como lo más grande. → Kamaq: **"Disponible para cobrar S/ X"** arriba.
+- Onboarding en **3 pasos numerados** con badges naranjas (Kamaq ya lo tiene).
+- Widgets de estado/confianza: Trust Score, Payout Protection. → Kamaq: badge de
+  **estado del creador** + barra de progreso al "mínimo para cobrar".
+
+**SideShift** — fila de **stat-cards** (métrica grande + label + sublabel); énfasis
+en "Paid Out". → Kamaq: Vistas totales / Ganado / Aprobados / En revisión.
+
+**8x** — mockups de **clips verticales** como protagonistas; mobile-first (los
+creadores llegan del ad en el celu). → Kamaq: lista de clips con thumbnail/estado.
+
+**Diseño a construir (sistema Kamaq: naranja/crema, cards redondeadas, pills):**
+```
+Hola, {nombre}                         [badge estado]
+┌ Disponible para cobrar ────────────────────────┐
+│ S/ 128.40            [Yape/Plin · 24h]          │  ← número héroe naranja
+│ ▓▓▓▓▓░░░ 6,420 / 10,000 vistas para cobrar      │  ← progreso al mínimo
+└─────────────────────────────────────────────────┘
+[Vistas] [Ganado] [Aprobados] [En revisión]          ← stat row
+Mis clips                        [+ Enviar clip]
+  clip · campaña · vistas · pago · [estado]           ← lista con estado por clip
+Mi perfil                              [editar]        ← editar básico inline
+```
+Mobile-first obligatorio (tráfico de ads viene del celular).
+
 ## 10. Decisiones
 
 - ✅ **Login:** ambos — magic link + email/contraseña. *(decidido 2026-07-16)*

@@ -138,6 +138,18 @@
   .bhero .amt{font-size:46px;font-weight:900;letter-spacing:-.035em;line-height:1;margin-top:6px}
   .bhero .chip{display:inline-flex;align-items:center;gap:6px;background:#ffffff26;border:1px solid #ffffff40;color:#fff;font-size:12.5px;font-weight:700;padding:6px 13px;border-radius:999px;margin-top:14px}
   .crow{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  /* tarjeta que envuelve una tabla: en mobile hace scroll horizontal en vez de romperse */
+  .tablecard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tablecard table{min-width:600px}
+  /* barra de progreso (creador: vistas hacia el mínimo de cobro) */
+  .prog{height:10px;border-radius:999px;background:#ffffff2e;overflow:hidden;margin-top:12px}
+  .prog.dark{background:#17130e12}
+  .prog>span{display:block;height:100%;background:#fff;border-radius:999px;transition:width .5s}
+  .prog.dark>span{background:var(--grad)}
+  /* fila de "por pagar" */
+  .payhint{font-size:13px;color:var(--mut2);font-weight:500}
+  .wa{display:inline-flex;align-items:center;gap:5px;color:#12a150;font-weight:800;font-size:13px;text-decoration:none;white-space:nowrap}
+  .wa:hover{text-decoration:underline}
   @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.hero h1{font-size:44px}.nav-links{display:none}}
   @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2,.crow{grid-template-columns:1fr}}
 </style>
@@ -238,6 +250,16 @@ const grads=['linear-gradient(135deg,#0e7490,#22d3ee)','linear-gradient(135deg,#
 const gradFor=i=>grads[i%grads.length];
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
 let CAMPS=[];
+/* Mínimo de vistas (acumuladas y aprobadas) para habilitar el primer cobro. */
+const MIN_VISTAS_COBRO=10000;
+/* Link wa.me con mensaje pre-armado. El WhatsApp se guarda como 9 dígitos (Perú, +51).
+   Yape/Plin en Perú están atados a ese mismo número, así que sirve para pagar y avisar. */
+function waLink(phone,msg){
+  const d=String(phone||'').replace(/\D/g,'');
+  if(d.length<9)return '';
+  const full=d.length===9?'51'+d:d;
+  return `https://wa.me/${full}?text=${encodeURIComponent(msg)}`;
+}
 
 /* ===== ROLE / ROUTER ===== */
 function setRole(r){
@@ -301,20 +323,26 @@ function openCampaign(id){
     </div>
     <div class="sticky"><div class="panel"><h3>Enviar mi clip</h3>
       <label class="f">Link del video publicado</label><input class="f" id="clip_link" placeholder="https://...">
-      <label class="f">Tu usuario</label><input class="f" id="clip_user" placeholder="@tucuenta">
       <button class="btn accent wide" style="margin-top:16px" id="clipBtn" onclick="submitClip('${c.id}','${c.plataforma||''}')">Enviar para revisión</button>
-      <div class="note">Estimado: 100K vistas ≈ <b>${money((c.tarifa_1k||0)*100)}</b></div></div></div></div>
+      <div class="note">Necesitas tu cuenta de Kamaq para enviar y cobrar. Estimado: 100K vistas ≈ <b>${money((c.tarifa_1k||0)*100)}</b></div></div></div></div>
     <div class="back" onclick="go('discover')">← Volver a campañas</div>`;
   go('campaign');
 }
 async function submitClip(campId,plat){
   const link=document.getElementById('clip_link').value.trim();
-  if(!link){toast('Pega el link de tu video');return;}
-  const btn=document.getElementById('clipBtn');btn.disabled=true;btn.textContent='Enviando…';
-  let cid=null;
+  /* Exigir sesión: un clip sin creador_id no se puede pagar ni contactar (clip huérfano).
+     El tráfico de ads llega sin sesión, así que acá lo mandamos a entrar/registrarse. */
   const {data:se}=await sb.auth.getSession();
-  if(se.session){ if(!creadorRow){const {data}=await sb.from('creadores').select('id').eq('user_id',se.session.user.id).maybeSingle();creadorRow=data;} cid=creadorRow?creadorRow.id:null; }
-  const {error}=await sb.from('clips').insert({campana_id:campId,link,plataforma:plat,estado:'revision',creador_id:cid});
+  if(!se.session){
+    toast('Entra a tu cuenta para enviar tu clip y poder cobrar');
+    setRole('creator');go('creador');return;
+  }
+  if(!creadorRow){const {data}=await sb.from('creadores').select('id').eq('user_id',se.session.user.id).maybeSingle();creadorRow=data;}
+  if(!creadorRow){toast('Completa tu registro de creador antes de enviar clips');go('register');return;}
+  if(!link){toast('Pega el link de tu video');return;}
+  if(!safeUrl(link)){toast('El link debe ser un video público de TikTok o Instagram (https)');return;}
+  const btn=document.getElementById('clipBtn');btn.disabled=true;btn.textContent='Enviando…';
+  const {error}=await sb.from('clips').insert({campana_id:campId,link,plataforma:plat,estado:'revision',creador_id:creadorRow.id});
   if(error){btn.disabled=false;btn.textContent='Enviar para revisión';toast('Error al enviar. Intenta de nuevo.');return;}
   btn.textContent='✓ Enviado';toast('¡Clip enviado! Entrará a revisión.');
 }
@@ -342,12 +370,14 @@ function renderReg(){
     card.innerHTML=`<div class="eyebrow">Bienvenido a Kamaq</div><h2>Casi listo</h2><div class="subt">Paso 3 de 3 · Sobre ti</div>${dots}
       <label class="f">Ciudad</label><select class="f" id="r_city"><option value="">Selecciona…</option><option>Lima</option><option>Arequipa</option><option>Trujillo</option><option>Cusco</option><option>Piura</option><option>Chiclayo</option><option>Otra</option></select><div class="ferr" id="e_city">Selecciona tu ciudad</div>
       <label class="f">¿Cómo nos conociste?</label><select class="f" id="r_src"><option value="">Selecciona…</option><option>Anuncio en TikTok</option><option>Anuncio en Instagram</option><option>Anuncio en Google</option><option>Un amigo / referido</option><option>Otro</option></select>
+      <label class="f">Crea una contraseña <span class="muted" style="font-weight:500">· para entrar a tu panel y ver tus ganancias</span></label>
+      <input class="f" id="r_pass" type="password" value="${regData.pass||''}" placeholder="Mínimo 6 caracteres"><div class="ferr" id="e_pass">Usa una contraseña de 6 o más caracteres</div>
       <label class="terms"><input type="checkbox" id="r_terms"> Acepto los Términos y la política de privacidad de Kamaq.</label><div class="ferr" id="e_terms">Debes aceptar los términos</div>
       <div class="stepnav"><button class="btn ghost" onclick="regBack()">Atrás</button><button class="btn accent wide" id="regBtn" onclick="regSubmit()">Crear mi cuenta</button></div>`;
   }else{
-    card.innerHTML=`<div class="success"><div class="big">✓</div><h2>¡Registro recibido!</h2>
-      <p class="subt" style="margin-bottom:18px">Gracias, ${(regData.nombre||'').split(' ')[0]}. Te contactaremos por WhatsApp para aprobarte y asignarte tu primera campaña.</p>
-      <div class="stepnav"><button class="btn accent wide" onclick="go('discover')">Explorar campañas</button></div></div>`;
+    card.innerHTML=`<div class="success"><div class="big">✓</div><h2>¡Cuenta creada!</h2>
+      <p class="subt" style="margin-bottom:18px">Gracias, ${esc((regData.nombre||'').split(' ')[0])}. Revisa tu correo para confirmar tu cuenta y entrar a tu panel. Te contactaremos por WhatsApp para aprobarte y asignarte tu primera campaña.</p>
+      <div class="stepnav"><button class="btn ghost" onclick="setRole('creator');go('creador')">Entrar a mi panel</button><button class="btn accent wide" onclick="go('discover')">Explorar campañas</button></div></div>`;
   }
 }
 function showErr(id,cond){const e=document.getElementById(id);if(e)e.classList.toggle('show',cond);const inp=document.getElementById(id.replace('e_','r_'));if(inp)inp.classList.toggle('err',cond);return cond;}
@@ -373,16 +403,41 @@ function regBack(){regStep--;renderReg();}
 async function regSubmit(){
   regData.city=document.getElementById('r_city').value;
   regData.src=document.getElementById('r_src').value||utm()||'Directo';
+  regData.pass=document.getElementById('r_pass').value;
   const terms=document.getElementById('r_terms').checked;
-  let bad=false;bad=showErr('e_city',!regData.city)|bad;bad=showErr('e_terms',!terms)|bad;
+  let bad=false;
+  bad=showErr('e_city',!regData.city)|bad;
+  bad=showErr('e_pass',(regData.pass||'').length<6)|bad;
+  bad=showErr('e_terms',!terms)|bad;
   if(bad)return;
   const btn=document.getElementById('regBtn');btn.disabled=true;btn.textContent='Creando…';
+  /* 1) Perfil de creador (insert público). El email es único: si ya existe, mandamos a login. */
   const {error}=await sb.from('creadores').insert({
     nombre:regData.nombre,email:regData.email,whatsapp:regData.wsp,
     tiktok:regData.tt||null,instagram:regData.ig||null,seguidores:regData.seg||null,
     ciudad:regData.city,fuente:regData.src,estado:'nuevo'
   });
-  if(error){btn.disabled=false;btn.textContent='Crear mi cuenta';toast('Error al registrar. Intenta de nuevo.');console.error(error);return;}
+  if(error){
+    btn.disabled=false;btn.textContent='Crear mi cuenta';
+    if(error.code==='23505'||/duplicate|unique|already/i.test(error.message||'')){
+      toast('Ya hay una cuenta con ese email. Entra con tu contraseña.');setRole('creator');go('creador');return;
+    }
+    toast('Error al registrar. Intenta de nuevo.');console.error(error);return;
+  }
+  /* 2) Cuenta de acceso. El trigger on_auth_creador vincula este perfil por email. */
+  const {data:sd,error:se}=await sb.auth.signUp({
+    email:regData.email,password:regData.pass,
+    options:{emailRedirectTo:location.origin+location.pathname,data:{nombre:regData.nombre}}
+  });
+  if(se){
+    console.error(se);regStep=4;renderReg();
+    toast('Registro guardado. Entra a tu panel con tu email y contraseña.');return;
+  }
+  if(sd&&sd.session){
+    creadorSession=sd.session;creadorRow=null;
+    setRole('creator');go('creador');
+    toast('¡Cuenta creada! Este es tu panel 🎉');return;
+  }
   regStep=4;renderReg();
 }
 
@@ -407,7 +462,7 @@ async function renderBrand(){
     root.innerHTML=`<div class="authwrap"><div class="authcard"><div class="eyebrow">Panel interno · Kamaq</div><h2>Solo para el equipo</h2><div class="subt">Tu cuenta (${esc(session.user.email)}) no tiene acceso al panel de marca.</div><button class="btn accent wide" style="margin-top:18px" onclick="setRole('creator');go('creador')">Ir a mi panel de creador</button><div class="note" style="margin-top:14px"><a style="cursor:pointer;font-weight:700" onclick="logout()">Cerrar sesión</a></div></div></div>`;return;
   }
   root.innerHTML=`<div class="page-head"><h2>Panel interno</h2><p>${session.user.email} · <a style="color:var(--accent);cursor:pointer;font-weight:700" onclick="logout()">salir</a></p></div>
-    <div class="subnav"><button id="tb_resumen" onclick="setBrandTab('resumen')">Resumen</button><button id="tb_creators" onclick="setBrandTab('creators')">Creadores</button><button id="tb_clips" onclick="setBrandTab('clips')">Clips + Vistas</button><button id="tb_camps" onclick="setBrandTab('camps')">Campañas</button></div>
+    <div class="subnav"><button id="tb_resumen" onclick="setBrandTab('resumen')">Resumen</button><button id="tb_creators" onclick="setBrandTab('creators')">Creadores</button><button id="tb_clips" onclick="setBrandTab('clips')">Clips + Vistas</button><button id="tb_pagos" onclick="setBrandTab('pagos')">Por pagar</button><button id="tb_camps" onclick="setBrandTab('camps')">Campañas</button></div>
     <div id="brandBody" style="margin-top:16px"><p class="muted">Cargando…</p></div>`;
   setBrandTab(brandTab);
 }
@@ -463,8 +518,11 @@ async function renderCreadorDash(){
   const disponible=list.filter(c=>c.estado==='aprobado'||c.estado==='pagando').reduce((a,c)=>a+pay(c),0);
   const ganado=list.filter(c=>['aprobado','pagando','pagado'].includes(c.estado)).reduce((a,c)=>a+pay(c),0);
   const vistasTot=list.reduce((a,c)=>a+(c.vistas||0),0);
+  const vistasAprob=list.filter(c=>['aprobado','pagando','pagado'].includes(c.estado)).reduce((a,c)=>a+(c.vistas||0),0);
   const aprob=list.filter(c=>['aprobado','pagando','pagado'].includes(c.estado)).length;
   const revis=list.filter(c=>c.estado==='revision').length;
+  const alcanzo=vistasAprob>=MIN_VISTAS_COBRO;
+  const pctMin=Math.min(100,MIN_VISTAS_COBRO?Math.round(vistasAprob/MIN_VISTAS_COBRO*100):100);
   const e=creadorRow.estado;
   const eb=(e==='aprobado'||e==='activo')?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pausado'?'<span class="badge b-warn">Pausado</span>':'<span class="badge b-new">En revisión</span>';
   root.innerHTML=`
@@ -472,10 +530,16 @@ async function renderCreadorDash(){
     <div><h2>Hola, ${esc(creadorRow.nombre||'creador')} 👋</h2><p>${esc(creadorSession.user.email)} · <a style="color:var(--accent);cursor:pointer;font-weight:700" onclick="logoutCreador()">salir</a></p></div>
     <div style="padding-top:6px">${eb}</div>
   </div>
-  ${e==='nuevo'?'<div class="note">Tu cuenta está en revisión. Te contactaremos por WhatsApp para aprobarte y asignarte campañas.</div>':''}
+  ${e==='nuevo'?'<div class="note">Tu cuenta está en revisión. Te contactaremos por WhatsApp para aprobarte y asignarte campañas. Mientras tanto, ya puedes explorar campañas y preparar tus clips.</div>':''}
+  ${e==='rechazado'?'<div class="note" style="background:#e11d4810;border-color:#e11d4833;color:#b3123c">Tu cuenta no fue aprobada por ahora. Si crees que es un error, escríbenos por WhatsApp.</div>':''}
+  ${e==='pausado'?'<div class="note" style="background:#f59e0b14;border-color:#f59e0b3a;color:#92600a">Tu cuenta está pausada temporalmente. Escríbenos por WhatsApp para reactivarla.</div>':''}
   <div class="bhero" style="margin-top:16px">
     <div class="lbl">Disponible para cobrar</div>
     <div class="amt">${money(disponible)}</div>
+    <div class="prog"><span style="width:${pctMin}%"></span></div>
+    <div style="font-size:12.5px;font-weight:700;opacity:.94;margin-top:8px">${alcanzo
+      ? '✅ Alcanzaste el mínimo — te pagamos por Yape / Plin en 24h'
+      : `${kviews(vistasAprob)} / ${kviews(MIN_VISTAS_COBRO)} vistas aprobadas para tu primer cobro`}</div>
     <span class="chip">💸 Pagos por Yape / Plin en 24h</span>
   </div>
   <div class="cards4" style="margin-top:16px">
@@ -485,7 +549,7 @@ async function renderCreadorDash(){
     <div class="mcard"><div class="t">En revisión</div><div class="v">${revis}</div></div>
   </div>
   <div class="sec-head" style="margin:26px 0 12px"><div><h2 style="font-size:22px">Mis clips</h2></div><button class="btn sm accent" onclick="go('discover')">+ Enviar un clip</button></div>
-  ${list.length?`<div class="panel" style="padding:0;overflow:hidden"><table>
+  ${list.length?`<div class="tablecard"><table>
     <thead><tr><th>Campaña</th><th>Vistas</th><th>A cobrar</th><th>Estado</th><th>Link</th></tr></thead>
     <tbody>${list.map(c=>{const u=safeUrl(c.link);return `<tr>
       <td style="font-weight:600">${esc(c.campanas?c.campanas.titulo:'—')}<div class="muted" style="font-size:12px;font-weight:500">${esc(c.campanas?c.campanas.marca:'')}</div></td>
@@ -544,10 +608,11 @@ async function saveCreatorProfile(){
   creadorRow={...creadorRow,...upd};toast('Perfil actualizado ✓');
 }
 function setBrandTab(t){
-  brandTab=t;['resumen','creators','clips','camps'].forEach(x=>{const b=document.getElementById('tb_'+x);if(b)b.classList.toggle('on',x===t);});
+  brandTab=t;['resumen','creators','clips','pagos','camps'].forEach(x=>{const b=document.getElementById('tb_'+x);if(b)b.classList.toggle('on',x===t);});
   if(t==='resumen')loadResumen();
   if(t==='creators')loadCreators();
   if(t==='clips')loadClips();
+  if(t==='pagos')loadPayouts();
   if(t==='camps')loadBrandCamps();
 }
 /* ===== RESUMEN / FUNNEL (por UTM) ===== */
@@ -570,7 +635,7 @@ async function loadResumen(){
     <div class="mcard"><div class="t">Rechazados</div><div class="v">${byEstado['rechazado']||0}</div></div>
   </div>
   <div class="sec-head" style="margin:26px 0 12px"><h2 style="font-size:22px">De qué anuncio vienen (UTM)</h2></div>
-  ${fuentes.length?`<div class="panel" style="padding:0;overflow:hidden"><table>
+  ${fuentes.length?`<div class="tablecard"><table>
     <thead><tr><th>Fuente / utm_source</th><th style="width:90px">Registros</th><th style="width:40%">&nbsp;</th></tr></thead>
     <tbody>${fuentes.map(([f,n])=>`<tr>
       <td style="font-weight:600">${esc(f)}</td>
@@ -578,7 +643,7 @@ async function loadResumen(){
       <td><div style="height:8px;border-radius:999px;background:var(--accent);width:${Math.max(4,Math.round(n/maxF*100))}%"></div></td>
     </tr>`).join('')}</tbody></table></div>`:'<div class="panel"><p class="muted">Aún no hay registros. Cuando corran los ads, acá vas a ver qué anuncio trae más creadores.</p></div>'}
   <div class="sec-head" style="margin:26px 0 12px"><h2 style="font-size:22px">Registros por día</h2></div>
-  ${dias.length?`<div class="panel" style="padding:0;overflow:hidden"><table>
+  ${dias.length?`<div class="tablecard"><table>
     <thead><tr><th>Día</th><th>Registros</th></tr></thead>
     <tbody>${dias.map(([d,n])=>`<tr><td>${esc(d)}</td><td style="font-weight:800">${n}</td></tr>`).join('')}</tbody></table></div>`:''}`;
 }
@@ -607,21 +672,36 @@ async function loadCreators(){
     <span class="muted" style="font-size:13px">${from+1}–${Math.min(to+1,total)} de ${total}</span>
     <button class="btn sm ghost" ${to+1>=total?'disabled':''} onclick="crGo(1)">Siguientes →</button>
   </div>`;
-  b.innerHTML=bar+`<div class="panel" style="padding:0;overflow:hidden"><table>
+  b.innerHTML=bar+`<div class="tablecard"><table>
     <thead><tr><th>Creador</th><th>Ciudad</th><th>Vino de</th><th>Contacto</th><th>Estado</th><th>Acción</th></tr></thead>
     <tbody>${shown.map(c=>`<tr id="cr_${c.id}">
       <td><span class="u"><span class="av">${esc((c.nombre||'?')[0])}</span><div>${esc(c.nombre)}<div class="muted" style="font-size:12px">${esc(c.tiktok||c.instagram)}</div></div></span></td>
       <td>${esc(c.ciudad)||'—'}</td><td class="muted" style="font-size:13px">${esc(c.fuente)||'—'}</td>
-      <td class="muted" style="font-size:13px">${esc(c.whatsapp||c.email)||'—'}</td>
+      <td>${crContacto(c)}</td>
       <td class="cest">${cbadge(c.estado)}</td>
-      <td style="white-space:nowrap">${c.estado==='nuevo'?`<button class="btn sm" onclick="setCreator('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setCreator('${c.id}','rechazado')">Rechazar</button>`:'—'}</td>
+      <td class="cact" style="white-space:nowrap">${crActions(c)}</td>
     </tr>`).join('')}</tbody></table></div>`+nav;
+}
+function crContacto(c){
+  const wa=waLink(c.whatsapp,`Hola ${esc((c.nombre||'').split(' ')[0])}, te escribo de Kamaq 👋`);
+  return wa
+    ? `<a class="wa" href="${esc(wa)}" target="_blank" rel="noopener noreferrer">💬 ${esc(c.whatsapp)}</a>`
+    : `<span class="muted" style="font-size:13px">${esc(c.email)||'—'}</span>`;
+}
+function crActions(c){
+  const e=c.estado;
+  if(e==='nuevo'||e==='contactado')return `<button class="btn sm" onclick="setCreator('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setCreator('${c.id}','rechazado')">Rechazar</button>`;
+  if(e==='aprobado'||e==='activo')return `<button class="btn sm ghost" onclick="setCreator('${c.id}','pausado')">Pausar</button>`;
+  if(e==='pausado')return `<button class="btn sm" onclick="setCreator('${c.id}','aprobado')">Reactivar</button>`;
+  if(e==='rechazado')return `<button class="btn sm ghost" onclick="setCreator('${c.id}','nuevo')">Reabrir</button>`;
+  return '—';
 }
 async function setCreator(id,estado){
   const {error}=await sb.from('creadores').update({estado}).eq('id',id);
   if(error){toast('Error al actualizar');return;}
-  const row=document.getElementById('cr_'+id);row.querySelector('.cest').innerHTML=cbadge(estado);row.lastElementChild.innerHTML='—';
-  toast(estado==='aprobado'?'Creador aprobado ✓':'Creador rechazado');
+  const msg={aprobado:'Creador aprobado ✓',rechazado:'Creador rechazado',pausado:'Creador pausado',nuevo:'Creador reabierto'};
+  toast(msg[estado]||'Actualizado ✓');
+  loadCreators();
 }
 function ebadge(e){return e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pagando'?'<span class="badge b-good">Pagando</span>':'<span class="badge b-warn">En revisión</span>';}
 async function loadClips(){
@@ -644,7 +724,7 @@ async function loadClips(){
     <span class="muted" style="font-size:13px">${from+1}–${Math.min(to+1,total)} de ${total}</span>
     <button class="btn sm ghost" ${to+1>=total?'disabled':''} onclick="clGo(1)">Siguientes →</button>
   </div>`;
-  b.innerHTML=bar+`<div class="panel" style="padding:0;overflow:hidden"><table>
+  b.innerHTML=bar+`<div class="tablecard"><table>
     <thead><tr><th>Campaña</th><th>Link</th><th>Vistas</th><th>A pagar</th><th>Estado</th><th>Acción</th></tr></thead>
     <tbody>${(data||[]).map(c=>{const r=c.campanas?.tarifa_1k||0;
       const u=safeUrl(c.link),txt=esc((c.link||'').replace(/^https?:\/\//,'').slice(0,28));
@@ -656,8 +736,18 @@ async function loadClips(){
       <td><input class="vinput" type="number" min="0" value="${c.vistas||0}" onchange="updClip('${c.id}',this.value)"></td>
       <td class="pay" style="font-weight:800">${money((c.vistas||0)/1000*r)}</td>
       <td class="est">${ebadge(c.estado)}</td>
-      <td style="white-space:nowrap">${c.estado==='revision'?`<button class="btn sm" onclick="setClip('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setClip('${c.id}','rechazado')">Rechazar</button>`:'—'}</td>
+      <td style="white-space:nowrap">${clipActions(c)}</td>
     </tr>`;}).join('')}</tbody></table></div>`+nav;
+}
+/* Ciclo de vida del clip: revisión → aprobado → pagado, con reversa en cada paso.
+   El pago real (Yape/Plin) se ejecuta a mano; acá solo se registra el estado. */
+function clipActions(c){
+  const e=c.estado;
+  if(e==='revision')return `<button class="btn sm" onclick="setClip('${c.id}','aprobado')">Aprobar</button> <button class="btn sm ghost" onclick="setClip('${c.id}','rechazado')">Rechazar</button>`;
+  if(e==='aprobado'||e==='pagando')return `<button class="btn sm" onclick="setClip('${c.id}','pagado')">Marcar pagado</button> <button class="btn sm ghost" onclick="setClip('${c.id}','revision')">Revertir</button>`;
+  if(e==='pagado')return `<button class="btn sm ghost" onclick="setClip('${c.id}','aprobado')">Revertir pago</button>`;
+  if(e==='rechazado')return `<button class="btn sm ghost" onclick="setClip('${c.id}','revision')">Reabrir</button>`;
+  return '—';
 }
 function clSetEstado(v){clEstado=v;clPage=0;loadClips();}
 function clGo(d){clPage=Math.max(0,clPage+d);loadClips();}
@@ -667,12 +757,78 @@ async function updClip(id,val){
   row.querySelector('.pay').textContent=money(v/1000*rate);
   await sb.from('clips').update({vistas:v}).eq('id',id);
 }
+/* Actualiza el estado de un clip. Al marcar 'pagado' sella pagado_at para auditoría;
+   si la columna aún no existe (falta correr db/pagos.sql) reintenta solo con estado. */
 async function setClip(id,estado){
-  const {error}=await sb.from('clips').update({estado}).eq('id',id);
-  if(error){toast('Error');return;}
-  const row=document.getElementById('cl_'+id);row.querySelector('.est').innerHTML=ebadge(estado);row.lastElementChild.innerHTML='—';
-  toast(estado==='aprobado'?'Clip aprobado ✓':'Clip rechazado');
+  let patch={estado};
+  if(estado==='pagado')patch.pagado_at=new Date().toISOString();
+  let {error}=await sb.from('clips').update(patch).eq('id',id);
+  if(error&&/pagado_at|column|schema cache/i.test(error.message||'')){
+    ({error}=await sb.from('clips').update({estado}).eq('id',id));
+  }
+  if(error){toast('Error al actualizar el clip');console.error(error);return;}
+  const msg={aprobado:'Clip aprobado ✓',rechazado:'Clip rechazado',pagado:'Clip marcado como pagado 💸',revision:'Clip reabierto'};
+  toast(msg[estado]||'Actualizado ✓');
+  loadClips();
 }
+/* ===== POR PAGAR (payouts agrupados por creador) ===== */
+/* Suma los clips aprobados (aún no pagados) por creador y da un botón para
+   marcarlos pagados en bloque + un WhatsApp con el monto pre-armado para coordinar
+   el Yape/Plin. Es el tablero operativo del desembolso. */
+async function loadPayouts(){
+  const b=document.getElementById('brandBody');
+  b.innerHTML='<p class="muted">Cargando pagos…</p>';
+  const {data,error}=await sb.from('clips')
+    .select('id,vistas,creador_id,campanas(tarifa_1k),creadores(nombre,whatsapp,estado)')
+    .in('estado',['aprobado','pagando']);
+  if(error){b.innerHTML='<p class="muted">Error al cargar los pagos.</p>';console.error(error);return;}
+  const rows=data||[];
+  const pay=c=>(c.vistas||0)/1000*(c.campanas?.tarifa_1k||0);
+  const g={};let huerfanos=0,huerfMonto=0;
+  rows.forEach(c=>{
+    if(!c.creador_id){huerfanos++;huerfMonto+=pay(c);return;}
+    const k=c.creador_id;
+    if(!g[k])g[k]={id:k,nombre:c.creadores?.nombre||'—',whatsapp:c.creadores?.whatsapp||'',estado:c.creadores?.estado||'',clips:0,vistas:0,monto:0};
+    g[k].clips++;g[k].vistas+=(c.vistas||0);g[k].monto+=pay(c);
+  });
+  const lista=Object.values(g).sort((a,b)=>b.monto-a.monto);
+  const totalMonto=lista.reduce((a,c)=>a+c.monto,0)+huerfMonto;
+  const totalClips=rows.length;
+  b.innerHTML=`
+  <div class="cards4">
+    <div class="mcard"><div class="t">Total por pagar</div><div class="v">${money(totalMonto)}</div></div>
+    <div class="mcard"><div class="t">Creadores por pagar</div><div class="v">${lista.length}</div></div>
+    <div class="mcard"><div class="t">Clips aprobados</div><div class="v">${totalClips}</div></div>
+    <div class="mcard"><div class="t">Mínimo para cobrar</div><div class="v" style="font-size:22px">${kviews(MIN_VISTAS_COBRO)} vistas</div></div>
+  </div>
+  <div class="note" style="margin-top:18px">Paga por Yape/Plin al número de cada creador y luego pulsa <b>Marcar pagado</b>. Eso mueve todos sus clips aprobados a “pagado”.</div>
+  ${lista.length?`<div class="tablecard" style="margin-top:16px"><table>
+    <thead><tr><th>Creador</th><th>Yape / WhatsApp</th><th>Clips</th><th>Vistas</th><th>A pagar</th><th>Acción</th></tr></thead>
+    <tbody>${lista.map(c=>{
+      const bajo=c.vistas<MIN_VISTAS_COBRO;
+      const wa=waLink(c.whatsapp,`Hola ${(c.nombre||'').split(' ')[0]}, soy de Kamaq 👋 Tu pago por tus clips es de ${money(c.monto)}. Te lo envío por Yape/Plin a este número, confírmame que llegó 💸`);
+      return `<tr id="pay_${c.id}">
+      <td><span class="u"><span class="av">${esc((c.nombre||'?')[0])}</span><div>${esc(c.nombre)}${bajo?' <span class="badge b-warn" title="Aún no llega al mínimo sugerido">bajo el mínimo</span>':''}</div></span></td>
+      <td>${c.whatsapp?(wa?`<a class="wa" href="${esc(wa)}" target="_blank" rel="noopener noreferrer">💬 ${esc(c.whatsapp)}</a>`:esc(c.whatsapp)):'<span class="muted">sin número</span>'}</td>
+      <td>${c.clips}</td>
+      <td>${kviews(c.vistas)}</td>
+      <td style="font-weight:900">${money(c.monto)}</td>
+      <td style="white-space:nowrap"><button class="btn sm accent" onclick="payCreator('${c.id}',${c.monto.toFixed(2)})">Marcar pagado</button></td>
+    </tr>`;}).join('')}</tbody></table></div>`:'<div class="panel" style="margin-top:16px"><p class="muted">No hay pagos pendientes. Cuando apruebes clips, acá aparece cuánto le debes a cada creador.</p></div>'}
+  ${huerfanos?`<div class="note" style="margin-top:14px;background:#e11d4810;border-color:#e11d4833;color:#b3123c">⚠️ ${huerfanos} clip(s) aprobados por ${money(huerfMonto)} <b>sin creador asignado</b> — no se pueden pagar. Son de antes de exigir login; revísalos en la pestaña Clips.</div>`:''}`;
+}
+async function payCreator(cid,monto){
+  if(!confirm(`¿Marcar como pagado ${money(monto)} a este creador? Hazlo solo después de enviar el Yape/Plin.`))return;
+  const stamp=new Date().toISOString();
+  let {error}=await sb.from('clips').update({estado:'pagado',pagado_at:stamp}).eq('creador_id',cid).in('estado',['aprobado','pagando']);
+  if(error&&/pagado_at|column|schema cache/i.test(error.message||'')){
+    ({error}=await sb.from('clips').update({estado:'pagado'}).eq('creador_id',cid).in('estado',['aprobado','pagando']));
+  }
+  if(error){toast('Error al marcar el pago');console.error(error);return;}
+  toast(`Pago de ${money(monto)} registrado ✓`);
+  loadPayouts();
+}
+
 /* ===== CAMPAÑAS: listar / crear / editar / pausar ===== */
 const MARCAS=['Vialex','Royal Home'];
 const PLATS=['TikTok','Instagram'];
@@ -710,7 +866,7 @@ async function loadBrandCamps(){
       ${campForm?'':`<button class="btn sm accent" onclick="openCampForm('new')">+ Nueva campaña</button>`}
     </div>
     ${form}
-    <div class="panel" style="padding:0;overflow:hidden"><table>
+    <div class="tablecard"><table>
     <thead><tr><th>Campaña</th><th>Marca</th><th>Plataforma</th><th>Tarifa</th><th>Gastado / Presupuesto</th><th>Estado</th><th>Acción</th></tr></thead>
     <tbody>${CAMPS_ADMIN.map(c=>`<tr>
       <td style="font-weight:600">${esc(c.titulo)}<div class="muted" style="font-size:12px;font-weight:500">${esc(c.categoria)||'—'}</div></td>
