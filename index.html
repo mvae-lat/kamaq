@@ -1205,16 +1205,21 @@ loadCamps();
 updateNavCta();
 if(_magicReturn){setRole('creator');go('creador');}
 
-/* ===== PWA: service worker + prompt de instalación ===== */
+/* ===== PWA: service worker + instalación ===== */
 if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}
+const _isIOS=/iphone|ipad|ipod/i.test(navigator.userAgent);
+const _standalone=window.matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
 let _deferredPrompt=null;
-window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;const b=document.getElementById('installBtn');if(b)b.classList.add('show');});
+function showInstallBtn(txt){const b=document.getElementById('installBtn');if(b){if(txt)b.textContent=txt;b.classList.add('show');}}
+/* Android/Chrome: prompt nativo cuando el navegador lo ofrece. */
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;showInstallBtn('📲 Instalar Kamaq');});
+/* iOS/Safari: no hay prompt automático → mostramos botón con instrucciones. */
+window.addEventListener('load',()=>{if(_isIOS&&!_standalone)showInstallBtn('📲 Instalar en tu iPhone');});
 async function doInstall(){
-  const b=document.getElementById('installBtn');if(b)b.classList.remove('show');
-  if(!_deferredPrompt)return;
-  _deferredPrompt.prompt();
-  try{await _deferredPrompt.userChoice;}catch(_){}
-  _deferredPrompt=null;
+  const b=document.getElementById('installBtn');
+  if(_deferredPrompt){if(b)b.classList.remove('show');_deferredPrompt.prompt();try{await _deferredPrompt.userChoice;}catch(_){}_deferredPrompt=null;return;}
+  if(_isIOS){toast('En Safari: toca Compartir ⬆️ (abajo) y elige "Añadir a pantalla de inicio"');return;}
+  toast('Abre el menú del navegador (⋮) y elige "Instalar aplicación"');
 }
 window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBtn');if(b)b.classList.remove('show');toast('¡Kamaq instalada! Búscala en tu pantalla de inicio 🎉');});
 </script>
