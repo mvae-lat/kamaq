@@ -9,6 +9,14 @@
 <meta name="description" content="Crea clips para Vialex, Royal Home y más marcas, publícalos desde tu propia cuenta y cobra por cada 1,000 vistas. Hecho en Perú, escalando a LATAM.">
 <meta name="theme-color" content="#ff5a2c">
 <link rel="canonical" href="https://www.kamaq.lat/">
+<!-- PWA: instalable en pantalla de inicio + base para push -->
+<link rel="manifest" href="/manifest.json">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Kamaq">
 <!-- Open Graph / redes. Las URLs absolutas apuntan al dominio final kamaq.lat;
      og.png vive en la raíz del sitio (junto a index.html). -->
 <meta property="og:type" content="website">
@@ -134,6 +142,8 @@
   .note{background:#ff5a2c10;border:1px solid #ff5a2c33;border-radius:14px;padding:13px 17px;font-size:13px;color:#b23c14;margin-top:18px;font-weight:500}
   .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:#17130e;color:#fff;padding:13px 22px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:var(--shadow-lg);z-index:200;opacity:0;transition:opacity .3s,transform .3s;pointer-events:none}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+  .installbtn{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:150;display:none;align-items:center;gap:8px;background:var(--accent);color:#fff;font-weight:800;font-size:14px;padding:12px 20px;border-radius:999px;box-shadow:0 10px 26px -8px rgba(255,90,44,.6)}
+  .installbtn.show{display:inline-flex}
   /* creador dashboard */
   .bhero{background:var(--grad);color:#fff;border-radius:var(--radius);padding:24px 26px;box-shadow:var(--shadow-lg)}
   .bhero .lbl{font-size:13px;font-weight:700;opacity:.92}
@@ -295,6 +305,7 @@
 
 <footer><div class="wrap">Kamaq · Vialex &amp; Royal Home 🇵🇪 → LATAM · <span id="connState">conectando…</span></div></footer>
 <div class="toast" id="toast"></div>
+<button class="installbtn" id="installBtn" onclick="doInstall()">📲 Instalar Kamaq</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
@@ -1193,6 +1204,19 @@ sb.auth.onAuthStateChange((event,sess)=>{
 loadCamps();
 updateNavCta();
 if(_magicReturn){setRole('creator');go('creador');}
+
+/* ===== PWA: service worker + prompt de instalación ===== */
+if('serviceWorker' in navigator){window.addEventListener('load',()=>{navigator.serviceWorker.register('/sw.js').catch(()=>{});});}
+let _deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();_deferredPrompt=e;const b=document.getElementById('installBtn');if(b)b.classList.add('show');});
+async function doInstall(){
+  const b=document.getElementById('installBtn');if(b)b.classList.remove('show');
+  if(!_deferredPrompt)return;
+  _deferredPrompt.prompt();
+  try{await _deferredPrompt.userChoice;}catch(_){}
+  _deferredPrompt=null;
+}
+window.addEventListener('appinstalled',()=>{const b=document.getElementById('installBtn');if(b)b.classList.remove('show');toast('¡Kamaq instalada! Búscala en tu pantalla de inicio 🎉');});
 </script>
 </body>
 </html>
