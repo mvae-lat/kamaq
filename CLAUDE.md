@@ -76,6 +76,11 @@ Los INSERT públicos deben usar `return=minimal`, es decir `supabase.from('...')
     de vida completo (revisión → aprobado → pagado, con reversa).
   - Por pagar: clips aprobados agrupados por creador, total S/, WhatsApp/Yape y
     "Marcar pagado" en bloque (tablero de desembolso).
+  - Campañas: formulario en 4 secciones (básico/pago/brief/publicación) con **brief
+    estructurado** — objetivo, guión, duración, hashtag, menciones, do's/don'ts (listas
+    dinámicas), ejemplos y guía. Se guarda en `campanas.brief_json` (jsonb). El creador
+    lo ve rico en el detalle; campañas viejas sin brief_json caen al formato genérico.
+    **`db/brief-json.sql` corrido (2026-07-21).** saveCamp tiene fallback si falta la col.
   - Campañas: listado + crear (formulario inline) + editar + pausar/activar, y
     columna Gastado/Presupuesto derivada de los clips. Pausar saca la campaña del
     discover porque `loadCamps()` filtra por `estado='activa'`.
