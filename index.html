@@ -162,6 +162,32 @@
   /* badge de tarifa sobre el cover + gancho de ganancia en la card */
   .camp .cover .ratebadge{position:absolute;top:12px;right:12px;background:#fffffff2;color:var(--txt);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .camp .earn{font-size:12.5px;font-weight:800;color:var(--good);margin-top:-4px}
+  /* formulario de campaña por secciones (más aire, menos "pegado") */
+  .fsec{margin-top:28px;padding-top:24px;border-top:1px solid var(--border)}
+  .fsec.first{margin-top:6px;padding-top:0;border-top:none}
+  .fsec .fh{font-size:15px;font-weight:800;letter-spacing:-.01em;display:flex;align-items:center;gap:8px}
+  .fsec .fhint{font-size:12.5px;color:var(--mut2);font-weight:500;margin:3px 0 4px}
+  .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  .fnum{width:24px;height:24px;border-radius:8px;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:900;flex:none}
+  /* listas dinámicas: qué sí / qué no / ejemplos */
+  .dyn{display:flex;flex-direction:column;gap:9px;margin-top:10px}
+  .dynrow{display:flex;gap:9px;align-items:center}
+  .dynrow input{flex:1;margin:0}
+  .dynrow .del{width:40px;height:44px;flex:none;border-radius:12px;border:1px solid var(--border);background:#fff;color:var(--bad);font-size:20px;line-height:1;cursor:pointer}
+  .dynrow .del:hover{border-color:var(--bad);background:#e11d4808}
+  .addrow{align-self:flex-start;background:transparent;border:1.5px dashed var(--border);color:var(--mut2);font-weight:700;font-size:13px;padding:10px 15px;border-radius:12px;cursor:pointer;margin-top:2px}
+  .addrow:hover{border-color:var(--accent);color:var(--accent);background:#ff5a2c08}
+  /* brief rico en el detalle del creador */
+  .blead{font-size:15.5px;line-height:1.5;font-weight:600}
+  .bguion{white-space:pre-wrap;font-size:14.5px;color:var(--mut2);line-height:1.6;margin-top:6px}
+  .blist{list-style:none;margin-top:8px;display:flex;flex-direction:column;gap:7px}
+  .blist li{font-size:14px;display:flex;gap:9px;align-items:flex-start;line-height:1.4}
+  .blist li::before{content:"";flex:none;margin-top:2px}
+  .blist.ok li::before{content:"✅"}.blist.no li::before{content:"🚫"}
+  .reqchips{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+  .reqchip{background:#17130e0a;border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700}
+  .bsub{font-size:13px;font-weight:800;color:var(--mut2);text-transform:uppercase;letter-spacing:.04em;margin-top:18px}
+  @media(max-width:640px){.fgrid{grid-template-columns:1fr}}
   @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.hero h1{font-size:44px}.nav-links{display:none}}
   @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2,.crow{grid-template-columns:1fr}}
 </style>
@@ -269,6 +295,8 @@ const esc=s=>String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&
    El link del clip lo escribe cualquier anónimo: un javascript: aquí correría en la sesión del admin. */
 const safeUrl=u=>{try{const x=new URL(String(u??''));
   return x.protocol==='https:'&&/(^|\.)(tiktok\.com|instagram\.com)$/i.test(x.hostname)?x.href:'';}catch{return '';}};
+/* Links del brief (guía / ejemplos): solo los escribe el admin, así que basta con exigir https. */
+const safeHttps=u=>{try{const x=new URL(String(u??''));return x.protocol==='https:'?x.href:'';}catch{return '';}};
 const grads=['linear-gradient(135deg,#0e7490,#22d3ee)','linear-gradient(135deg,#b45309,#fbbf24)','linear-gradient(135deg,#7c2d12,#ff6a2c)','linear-gradient(135deg,#065f46,#34d399)','linear-gradient(135deg,#9f1239,#fb7185)','linear-gradient(135deg,#1e3a8a,#60a5fa)'];
 const gradFor=i=>grads[i%grads.length];
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
@@ -342,6 +370,36 @@ function renderCamps(){
   const g=document.getElementById('campGrid');
   g.innerHTML=CAMPS.length?CAMPS.map((c,i)=>campCard(c,i)).join(''):'<p class="muted">Aún no hay campañas activas.</p>';
 }
+/* Render del brief que ve el creador: usa brief_json si existe; si no, cae al genérico. */
+function campBriefHTML(c){
+  const bj=(c.brief_json&&typeof c.brief_json==='object')?c.brief_json:{};
+  const has=bj.objetivo||bj.guion||(bj.dos&&bj.dos.length)||(bj.donts&&bj.donts.length);
+  if(!has){
+    return `<ul class="req">
+      <li>${esc(c.brief)||'Graba un clip vertical de 15–30s mostrando el producto de forma natural.'}</li>
+      <li>Menciona ${esc(c.marca)} ${c.hashtag?('con el hashtag <b>'+esc(c.hashtag)+'</b>'):'en el video o descripción'}.</li>
+      <li>Publica desde tu propia cuenta de ${esc(c.plataforma)||'TikTok/Instagram'}.</li>
+      <li>Solo vistas orgánicas cuentan — nada de bots.</li></ul>`;
+  }
+  const chips=[];
+  if(bj.duracion)chips.push('⏱️ '+esc(bj.duracion));
+  if(c.hashtag)chips.push(esc(c.hashtag));
+  if(bj.menciones)chips.push('@ '+esc(bj.menciones));
+  chips.push('📱 '+esc(c.plataforma||'TikTok / Instagram'));
+  const guion=bj.guion?`<div class="bsub">Guión sugerido</div><div class="bguion">${esc(bj.guion)}</div>`:'';
+  const dos=(bj.dos&&bj.dos.length)?`<div class="bsub">Qué sí hacer</div><ul class="blist ok">${bj.dos.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';
+  const donts=(bj.donts&&bj.donts.length)?`<div class="bsub">Qué evitar</div><ul class="blist no">${bj.donts.map(x=>`<li>${esc(x)}</li>`).join('')}</ul>`:'';
+  const refsA=(bj.refs||[]).map(u=>{const s=safeHttps(u);return s?`<a href="${esc(s)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent);font-weight:700;font-size:14px;display:block;margin-top:6px">▶ ${esc(s.replace(/^https?:\/\//,'').slice(0,46))}</a>`:'';}).filter(Boolean).join('');
+  const refs=refsA?`<div class="bsub">Ejemplos</div>${refsA}`:'';
+  const docS=safeHttps(bj.docUrl||'');
+  const doc=docS?`<a href="${esc(docS)}" target="_blank" rel="noopener noreferrer" class="btn sm ghost" style="margin-top:18px;display:inline-flex">📄 Ver guía completa</a>`:'';
+  return `
+    ${bj.objetivo?`<div class="blead">${esc(bj.objetivo)}</div>`:''}
+    <div class="reqchips">${chips.map(t=>`<span class="reqchip">${t}</span>`).join('')}</div>
+    ${guion}${dos}${donts}${refs}
+    <div class="muted" style="font-size:13.5px;margin-top:16px">👁️ Solo vistas orgánicas cuentan — nada de bots. Publica desde tu propia cuenta.</div>
+    ${doc}`;
+}
 function openCampaign(id){
   const i=CAMPS.findIndex(x=>x.id===id);const c=CAMPS[i];if(!c)return;
   document.getElementById('campDetail').innerHTML=`
@@ -350,11 +408,7 @@ function openCampaign(id){
         <div class="who" style="font-size:16px;font-weight:800;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.25);display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;display:grid;place-items:center;color:#fff;font-weight:900;background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span> ${esc(c.marca)}</div></div>
       <h2 style="font-size:30px;margin:18px 0 6px;letter-spacing:-.03em;font-weight:900">${esc(c.titulo)}</h2>
       <div style="display:flex;gap:8px;margin-bottom:16px"><span class="badge b-info">${esc(c.plataforma)}</span><span class="badge b-good">Activa</span></div>
-      <div class="panel"><h3>Brief de la campaña</h3><ul class="req">
-        <li>${esc(c.brief)||'Graba un clip vertical de 15–30s mostrando el producto de forma natural.'}</li>
-        <li>Menciona ${esc(c.marca)} ${c.hashtag?('con el hashtag <b>'+esc(c.hashtag)+'</b>'):'en el video o descripción'}.</li>
-        <li>Publica desde tu propia cuenta de ${esc(c.plataforma)||'TikTok/Instagram'}.</li>
-        <li>Solo vistas orgánicas cuentan — nada de bots.</li></ul></div>
+      <div class="panel"><h3>Brief de la campaña</h3>${campBriefHTML(c)}</div>
       <div class="panel" style="margin-top:16px"><h3>Reglas de pago</h3>
         <div class="kv"><span>Pago por 1,000 vistas</span><span class="v grad-txt">${money(c.tarifa_1k)}</span></div>
         <div class="kv"><span>Mínimo para cobrar</span><span class="v">10,000 vistas</span></div></div>
@@ -924,52 +978,105 @@ function ncMarcaChange(){
   const s=document.getElementById('r_ncmarca');
   document.getElementById('r_ncmarca2').style.display=s.value==='__otra'?'block':'none';
 }
+/* Listas dinámicas del brief (qué sí / qué no / ejemplos): agregar y quitar filas. */
+function briefRow(type,val){
+  const ph={dos:'Ej: Muestra el producto en uso real',donts:'Ej: Nada de música con copyright',refs:'https://www.tiktok.com/@ejemplo/video/...'}[type]||'';
+  return `<div class="dynrow"><input class="f" data-dyn="${type}" value="${esc(val||'')}" placeholder="${ph}"><button type="button" class="del" title="Quitar" onclick="this.parentNode.remove()">×</button></div>`;
+}
+function addBriefRow(type){document.getElementById('dyn_'+type).insertAdjacentHTML('beforeend',briefRow(type,''));}
+function dynBlock(type,arr){
+  const rows=(arr&&arr.length?arr:['']).map(v=>briefRow(type,v)).join('');
+  return `<div class="dyn" id="dyn_${type}">${rows}</div><button type="button" class="addrow" onclick="addBriefRow('${type}')">+ Agregar otro</button>`;
+}
 function campFormHTML(c){
   const e=c||{},isEdit=!!c;
   const otra=!!(isEdit&&e.marca&&!MARCAS.includes(e.marca));
+  const bj=(c&&c.brief_json&&typeof c.brief_json==='object')?c.brief_json:{};
   return `<div class="panel" style="margin-bottom:16px">
-    <h3>${isEdit?'Editar campaña':'Nueva campaña'}</h3>
-    <div class="row2">
-      <div><label class="f">Título</label>
-        <input class="f" id="r_nctitulo" value="${esc(e.titulo)}" placeholder="Verano Vialex — tu look del día">
-        <div class="ferr" id="e_nctitulo">Ingresa un título</div></div>
-      <div><label class="f">Marca</label>
-        <select class="f" id="r_ncmarca" onchange="ncMarcaChange()">
-          <option value="">Selecciona…</option>
-          ${MARCAS.map(m=>`<option ${e.marca===m?'selected':''}>${m}</option>`).join('')}
-          <option value="__otra" ${otra?'selected':''}>Otra…</option>
-        </select>
-        <div class="ferr" id="e_ncmarca">Selecciona la marca</div>
-        <input class="f" id="r_ncmarca2" style="margin-top:8px;display:${otra?'block':'none'}" value="${otra?esc(e.marca):''}" placeholder="Nombre de la marca">
-        <div class="ferr" id="e_ncmarca2">Ingresa el nombre de la marca</div></div>
+    <h3 style="margin-bottom:2px">${isEdit?'Editar campaña':'Nueva campaña'}</h3>
+    <div class="muted" style="font-size:13px">Mientras más claro el brief, mejores clips vas a recibir.</div>
+
+    <div class="fsec first">
+      <div class="fh"><span class="fnum">1</span> Lo básico</div>
+      <div class="fgrid" style="margin-top:14px">
+        <div><label class="f">Título de la campaña</label>
+          <input class="f" id="r_nctitulo" value="${esc(e.titulo)}" placeholder="Verano Vialex — tu look del día">
+          <div class="ferr" id="e_nctitulo">Ingresa un título</div></div>
+        <div><label class="f">Marca</label>
+          <select class="f" id="r_ncmarca" onchange="ncMarcaChange()">
+            <option value="">Selecciona…</option>
+            ${MARCAS.map(m=>`<option ${e.marca===m?'selected':''}>${m}</option>`).join('')}
+            <option value="__otra" ${otra?'selected':''}>Otra…</option>
+          </select>
+          <div class="ferr" id="e_ncmarca">Selecciona la marca</div>
+          <input class="f" id="r_ncmarca2" style="margin-top:8px;display:${otra?'block':'none'}" value="${otra?esc(e.marca):''}" placeholder="Nombre de la marca">
+          <div class="ferr" id="e_ncmarca2">Ingresa el nombre de la marca</div></div>
+        <div><label class="f">Categoría</label>
+          <input class="f" id="r_nccat" value="${esc(e.categoria)}" placeholder="Moda, Hogar, Reto…">
+          <div class="ferr" id="e_nccat">Ingresa una categoría</div></div>
+        <div><label class="f">Plataforma</label>
+          <select class="f" id="r_ncplat"><option value="">Selecciona…</option>
+            ${PLATS.map(p=>`<option ${e.plataforma===p?'selected':''}>${p}</option>`).join('')}</select>
+          <div class="ferr" id="e_ncplat">Selecciona la plataforma</div></div>
+      </div>
     </div>
-    <div class="row2">
-      <div><label class="f">Categoría</label>
-        <input class="f" id="r_nccat" value="${esc(e.categoria)}" placeholder="Moda, Hogar, Reto…">
-        <div class="ferr" id="e_nccat">Ingresa una categoría</div></div>
-      <div><label class="f">Plataforma</label>
-        <select class="f" id="r_ncplat"><option value="">Selecciona…</option>
-          ${PLATS.map(p=>`<option ${e.plataforma===p?'selected':''}>${p}</option>`).join('')}</select>
-        <div class="ferr" id="e_ncplat">Selecciona la plataforma</div></div>
+
+    <div class="fsec">
+      <div class="fh"><span class="fnum">2</span> El pago</div>
+      <div class="fhint">Cuánto pagas por cada 1,000 vistas y el presupuesto total de la campaña.</div>
+      <div class="fgrid" style="margin-top:10px">
+        <div><label class="f">Tarifa por 1,000 vistas (S/)</label>
+          <input class="f" id="r_nctarifa" type="number" step="0.05" min="0" value="${e.tarifa_1k??''}" placeholder="0.80">
+          <div class="ferr" id="e_nctarifa">Ingresa una tarifa mayor a 0</div></div>
+        <div><label class="f">Presupuesto total (S/)</label>
+          <input class="f" id="r_ncpres" type="number" step="100" min="0" value="${e.presupuesto??''}" placeholder="6000">
+          <div class="ferr" id="e_ncpres">Ingresa un presupuesto mayor a 0</div></div>
+      </div>
     </div>
-    <div class="row2">
-      <div><label class="f">Tarifa por 1,000 vistas (S/)</label>
-        <input class="f" id="r_nctarifa" type="number" step="0.05" min="0" value="${e.tarifa_1k??''}" placeholder="0.80">
-        <div class="ferr" id="e_nctarifa">Ingresa una tarifa mayor a 0</div></div>
-      <div><label class="f">Presupuesto (S/)</label>
-        <input class="f" id="r_ncpres" type="number" step="100" min="0" value="${e.presupuesto??''}" placeholder="6000">
-        <div class="ferr" id="e_ncpres">Ingresa un presupuesto mayor a 0</div></div>
+
+    <div class="fsec">
+      <div class="fh"><span class="fnum">3</span> El brief · qué quieres del video</div>
+      <div class="fhint">Esto es lo que ve el creador. Sé específico: mejor brief = mejores clips.</div>
+
+      <label class="f">🎯 Objetivo — ¿qué quieres lograr?</label>
+      <textarea class="f" id="r_ncobj" rows="2" placeholder="Ej: Mostrar lo fácil que es cocinar con Royal Home en menos de 15s, con energía y buena luz.">${esc(bj.objetivo||e.brief||'')}</textarea>
+      <div class="ferr" id="e_ncobj">Cuéntale al creador qué buscas</div>
+
+      <label class="f">🎬 Guión / plan sugerido del video</label>
+      <textarea class="f" id="r_ncguion" rows="4" placeholder="1) Hook los primeros 2s&#10;2) Muestra el producto en uso&#10;3) Cierra con el nombre de la marca">${esc(bj.guion||'')}</textarea>
+
+      <div class="fgrid" style="margin-top:6px">
+        <div><label class="f">⏱️ Duración sugerida</label>
+          <input class="f" id="r_ncdur" value="${esc(bj.duracion||'')}" placeholder="15–30 segundos"></div>
+        <div><label class="f"># Hashtag</label>
+          <input class="f" id="r_nchash" value="${esc(e.hashtag)}" placeholder="#VialexVerano"></div>
+      </div>
+      <label class="f">@ Menciones obligatorias</label>
+      <input class="f" id="r_ncment" value="${esc(bj.menciones||'')}" placeholder="@vialex.pe — etiqueta a la marca">
+
+      <label class="f" style="margin-top:20px">✅ Qué SÍ hacer</label>
+      ${dynBlock('dos',bj.dos)}
+
+      <label class="f" style="margin-top:20px">🚫 Qué evitar</label>
+      ${dynBlock('donts',bj.donts)}
+
+      <label class="f" style="margin-top:20px">🔗 Ejemplos / referencias</label>
+      ${dynBlock('refs',bj.refs)}
+
+      <label class="f" style="margin-top:20px">📄 Guía completa <span class="muted" style="font-weight:500">· opcional, link a un Google Doc con todo el detalle</span></label>
+      <input class="f" id="r_ncdoc" value="${esc(bj.docUrl||'')}" placeholder="https://docs.google.com/...">
     </div>
-    <label class="f">Hashtag</label>
-    <input class="f" id="r_nchash" value="${esc(e.hashtag)}" placeholder="#VialexVerano">
-    <label class="f">Brief <span class="muted" style="font-weight:500">· si lo dejas vacío, la campaña muestra el brief genérico</span></label>
-    <textarea class="f" id="r_ncbrief" rows="3" placeholder="Graba un clip vertical de 15–30s mostrando el producto de forma natural.">${esc(e.brief)}</textarea>
-    <label class="f">Estado</label>
-    <select class="f" id="r_ncestado">
-      <option value="activa" ${e.estado!=='pausada'?'selected':''}>Activa · visible en el discover</option>
-      <option value="pausada" ${e.estado==='pausada'?'selected':''}>Pausada · oculta para creadores</option>
-    </select>
-    <div class="stepnav">
+
+    <div class="fsec">
+      <div class="fh"><span class="fnum">4</span> Publicación</div>
+      <label class="f">Estado</label>
+      <select class="f" id="r_ncestado">
+        <option value="activa" ${e.estado!=='pausada'?'selected':''}>Activa · visible en el discover</option>
+        <option value="pausada" ${e.estado==='pausada'?'selected':''}>Pausada · oculta para creadores</option>
+      </select>
+    </div>
+
+    <div class="stepnav" style="margin-top:26px">
       <button class="btn ghost" onclick="closeCampForm()">Cancelar</button>
       <button class="btn accent wide" id="ncBtn" onclick="saveCamp(${isEdit?`'${e.id}'`:'null'})">${isEdit?'Guardar cambios':'Crear campaña'}</button>
     </div>
@@ -982,16 +1089,20 @@ function campErr(err){
     : 'Error al guardar. Revisa la consola.';
 }
 async function saveCamp(id){
+  const val=x=>{const el=document.getElementById(x);return el?el.value.trim():'';};
   const marcaSel=document.getElementById('r_ncmarca').value;
-  const marca=marcaSel==='__otra'?document.getElementById('r_ncmarca2').value.trim():marcaSel;
-  const titulo=document.getElementById('r_nctitulo').value.trim();
-  const categoria=document.getElementById('r_nccat').value.trim();
+  const marca=marcaSel==='__otra'?val('r_ncmarca2'):marcaSel;
+  const titulo=val('r_nctitulo');
+  const categoria=val('r_nccat');
   const plataforma=document.getElementById('r_ncplat').value;
   const tarifa=parseFloat(document.getElementById('r_nctarifa').value);
   const pres=parseFloat(document.getElementById('r_ncpres').value);
-  const hashtag=document.getElementById('r_nchash').value.trim();
-  const brief=document.getElementById('r_ncbrief').value.trim();
+  const hashtag=val('r_nchash');
+  const objetivo=val('r_ncobj');
   const estado=document.getElementById('r_ncestado').value;
+  const collect=t=>[...document.querySelectorAll('[data-dyn="'+t+'"]')].map(i=>i.value.trim()).filter(Boolean);
+  const brief_json={objetivo,guion:val('r_ncguion'),duracion:val('r_ncdur'),menciones:val('r_ncment'),
+    dos:collect('dos'),donts:collect('donts'),refs:collect('refs'),docUrl:val('r_ncdoc')};
   let bad=false;
   bad=showErr('e_nctitulo',!titulo)|bad;
   bad=showErr('e_ncmarca',!marcaSel)|bad;
@@ -1000,12 +1111,18 @@ async function saveCamp(id){
   bad=showErr('e_ncplat',!plataforma)|bad;
   bad=showErr('e_nctarifa',!(tarifa>0))|bad;
   bad=showErr('e_ncpres',!(pres>0))|bad;
-  if(bad)return;
+  bad=showErr('e_ncobj',!objetivo)|bad;
+  if(bad){toast('Revisa los campos marcados');return;}
   const btn=document.getElementById('ncBtn');btn.disabled=true;btn.textContent='Guardando…';
-  const payload={titulo,marca,categoria,plataforma,tarifa_1k:tarifa,presupuesto:pres,hashtag:hashtag||null,brief:brief||null,estado};
-  const {error}=id
-    ? await sb.from('campanas').update(payload).eq('id',id)
-    : await sb.from('campanas').insert(payload);
+  const base={titulo,marca,categoria,plataforma,tarifa_1k:tarifa,presupuesto:pres,hashtag:hashtag||null,brief:objetivo||null,estado};
+  let {error}=id
+    ? await sb.from('campanas').update({...base,brief_json}).eq('id',id)
+    : await sb.from('campanas').insert({...base,brief_json});
+  /* Si la columna brief_json aún no existe (falta correr db/brief-json.sql), guarda al menos lo básico. */
+  if(error&&/brief_json|column|schema cache/i.test(error.message||'')){
+    ({error}=id?await sb.from('campanas').update(base).eq('id',id):await sb.from('campanas').insert(base));
+    if(!error)toast('Guardado, pero el brief detallado necesita correr db/brief-json.sql en Supabase.');
+  }
   if(error){btn.disabled=false;btn.textContent=id?'Guardar cambios':'Crear campaña';toast(campErr(error));return;}
   toast(id?'Campaña actualizada ✓':'Campaña creada ✓');
   campForm=null;
