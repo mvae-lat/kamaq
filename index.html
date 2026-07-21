@@ -1140,8 +1140,16 @@ async function toggleCampEstado(id){
 }
 
 /* ===== INIT ===== */
+/* Solo re-renderizar cuando la sesión REALMENTE cambia (login / logout / otro usuario).
+   Antes se re-renderizaba en cada evento de auth (TOKEN_REFRESHED, o al volver el foco
+   desde otra pestaña del navegador), lo que borraba lo que la marca estaba escribiendo
+   en el formulario de campaña. Guardamos el último user id y si no cambió, no tocamos el DOM. */
+let _lastUid=null,_authInit=false;
 sb.auth.onAuthStateChange((event,sess)=>{
   session=sess;creadorSession=sess;updateNavCta();
+  const uid=(sess&&sess.user&&sess.user.id)||null;
+  if(_authInit&&uid===_lastUid)return;   // misma sesión → no re-render (no borres el form)
+  _authInit=true;_lastUid=uid;
   const active=document.querySelector('.view.active');
   if(active&&active.id==='creador')renderCreador();
   if(active&&active.id==='brand')renderBrand();
