@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <title>Kamaq — Gana posteando · Plataforma UGC LATAM</title>
 <meta name="description" content="Crea clips para Vialex, Royal Home y más marcas, publícalos desde tu propia cuenta y cobra por cada 1,000 vistas. Hecho en Perú, escalando a LATAM.">
 <meta name="theme-color" content="#ff5a2c">
@@ -31,7 +33,7 @@
     --shadow:0 10px 30px -12px rgba(40,25,10,.18);--shadow-lg:0 30px 60px -20px rgba(40,25,10,.28);
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{background:var(--bg);color:var(--txt);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
+  body{background:var(--bg);color:var(--txt);font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;line-height:1.5;-webkit-font-smoothing:antialiased}
   a{color:inherit;text-decoration:none}
   .wrap{max-width:1180px;margin:0 auto;padding:0 22px}
   .muted{color:var(--mut2)}
@@ -162,6 +164,14 @@
   /* badge de tarifa sobre el cover + gancho de ganancia en la card */
   .camp .cover .ratebadge{position:absolute;top:12px;right:12px;background:#fffffff2;color:var(--txt);border-radius:999px;padding:5px 12px;font-size:13px;font-weight:900;box-shadow:0 2px 8px rgba(0,0,0,.18)}
   .camp .earn{font-size:12.5px;font-weight:800;color:var(--good);margin-top:-4px}
+  .camp.ghost{cursor:default}.camp.ghost:hover{transform:none;box-shadow:var(--shadow)}
+  /* FAQ (capa de confianza estilo Content Rewards / Whop) */
+  .faq{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:16px 20px;margin-top:12px;box-shadow:var(--shadow)}
+  .faq summary{font-weight:800;cursor:pointer;list-style:none;font-size:15.5px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .faq summary::-webkit-details-marker{display:none}
+  .faq summary::after{content:"+";color:var(--accent);font-size:24px;font-weight:400;line-height:1}
+  .faq[open] summary::after{content:"–"}
+  .faq p{color:var(--mut2);font-size:14.5px;line-height:1.55;margin-top:12px}
   /* formulario de campaña por secciones (más aire, menos "pegado") */
   .fsec{margin-top:28px;padding-top:24px;border-top:1px solid var(--border)}
   .fsec.first{margin-top:6px;padding-top:0;border-top:none}
@@ -210,16 +220,16 @@
       <button id="tCreator" class="on" onclick="setRole('creator')">Creador</button>
       <button id="tBrand" onclick="setRole('brand')">Marca</button>
     </div>
-    <button class="btn sm accent" id="navCta" onclick="go('register')">Registrarme</button>
+    <button class="btn sm accent" id="navCta" onclick="go('register')">Empezar gratis</button>
   </div>
 </nav>
 
 <!-- HOME -->
 <section class="view active" id="home">
   <div class="hero"><div class="wrap">
-    <span class="pill">🇵🇪 Hecho en Perú · escalando a LATAM</span>
-    <h1>Gana dinero <span class="grad-txt">posteando</span> el contenido que ya haces</h1>
-    <p class="sub">Crea clips para Vialex, Royal Home y más marcas, publícalos desde tu cuenta y cobra por cada 1,000 vistas.</p>
+    <span class="pill">✅ Sin seguidores mínimos — cobras por vistas, no por fans</span>
+    <h1>Gana dinero <span class="grad-txt">posteando</span> videos de marcas peruanas</h1>
+    <p class="sub">No necesitas ser influencer. Graba un clip para Vialex o Royal Home, publícalo desde tu cuenta de TikTok o Instagram y cobra por cada 1,000 vistas — un video puede pegar aunque tu cuenta sea nueva.</p>
     <div class="cta">
       <button class="btn accent" onclick="go('register')">Empieza a ganar hoy</button>
       <button class="btn ghost" onclick="go('discover')">Ver campañas</button>
@@ -228,14 +238,14 @@
       <div class="lbl">Si tu clip logra <b id="calcV">100,000</b> vistas, ganas</div>
       <div class="amt grad-txt" id="calcOut">S/ 80.00</div>
       <input type="range" id="calcRange" min="10000" max="1000000" step="10000" value="100000" oninput="updCalc()" aria-label="Vistas de tu clip">
-      <div class="foot">A S/ <span id="calcRate">0.80</span> por 1,000 vistas · pago por Yape / Plin en 24h</div>
+      <div class="foot">A S/ <span id="calcRate">0.80</span> por 1,000 vistas · cobras desde 10,000 vistas por Yape / Plin</div>
     </div>
   </div></div>
   <div class="wrap"><div class="stats">
-    <div class="stat"><div class="n grad-txt">S/ 0.80</div><div class="l">pago por cada 1,000 vistas</div></div>
-    <div class="stat"><div class="n">Yape</div><div class="l">y Plin · pagos en 24h</div></div>
+    <div class="stat"><div class="n">S/ 0.80</div><div class="l">pago por cada 1,000 vistas</div></div>
+    <div class="stat"><div class="n">Yape</div><div class="l">y Plin · directo a tu cuenta</div></div>
     <div class="stat"><div class="n">0%</div><div class="l">comisión para el creador</div></div>
-    <div class="stat"><div class="n">2</div><div class="l">marcas activas · y creciendo</div></div>
+    <div class="stat"><div class="n">Hoy</div><div class="l">empiezas a postear · sin esperas</div></div>
   </div></div>
   <div class="band"><div class="wrap">
     <h2>Cómo funciona</h2>
@@ -246,14 +256,22 @@
       <div class="step"><div class="k">3</div><h3>Cobra por vistas</h3><p>Trackeamos tus vistas y pagamos por Yape o Plin. Más viral = más ganas.</p></div>
     </div>
     <div class="trust">
-      <span class="t">💸 Pago en 24h por Yape / Plin</span>
-      <span class="t">🆓 0% de comisión para ti</span>
-      <span class="t">👁️ Solo vistas orgánicas verificadas</span>
+      <span class="t">🇵🇪 Empresa peruana · pagos por Yape / Plin</span>
+      <span class="t">🆓 0% de comisión — te llevas todo</span>
+      <span class="t">🎯 Cobras desde 10,000 vistas acumuladas</span>
     </div>
   </div></div>
   <div class="band" style="border:none;padding-top:20px"><div class="wrap">
     <div class="sec-head"><div><h2>Campañas activas</h2><p class="muted" style="margin-top:6px">Elige una y empieza a ganar hoy.</p></div><a onclick="go('discover')">Ver todas →</a></div>
     <div class="grid" id="homeCamps"><p class="muted">Cargando campañas…</p></div>
+  </div></div>
+  <div class="band"><div class="wrap" style="max-width:760px">
+    <h2>Preguntas frecuentes</h2>
+    <details class="faq" open><summary>¿Necesito muchos seguidores?</summary><p>No. Te pagamos por las vistas que logre tu video, no por tus seguidores. Una cuenta nueva puede ganar igual que una grande si el clip pega.</p></details>
+    <details class="faq"><summary>¿Cuándo y cómo cobro?</summary><p>Por Yape o Plin. Verificamos las vistas de tu clip aprobado y te pagamos. El primer cobro se habilita al llegar a 10,000 vistas acumuladas.</p></details>
+    <details class="faq"><summary>¿De verdad es gratis?</summary><p>Sí. Registrarte es gratis y no cobramos comisión: te llevas el 100% de lo que generan tus vistas.</p></details>
+    <details class="faq"><summary>¿Cómo verifican las vistas?</summary><p>Revisamos las vistas reales de tu publicación. Solo cuentan las orgánicas: nada de bots ni vistas compradas.</p></details>
+    <details class="faq"><summary>¿Puedo participar en varias campañas?</summary><p>Sí. Puedes postear para todas las marcas activas y sumar las ganancias de cada clip.</p></details>
   </div></div>
 </section>
 
@@ -316,8 +334,8 @@ function waLink(phone,msg){
 function setRole(r){
   document.getElementById('tCreator').classList.toggle('on',r==='creator');
   document.getElementById('tBrand').classList.toggle('on',r==='brand');
-  document.getElementById('navCreator').style.display=r==='creator'?'flex':'none';
-  document.getElementById('navBrand').style.display=r==='brand'?'flex':'none';
+  document.getElementById('navCreator').style.display=r==='creator'?'':'none';
+  document.getElementById('navBrand').style.display=r==='brand'?'':'none';
   const cta=document.getElementById('navCta');
   if(r==='creator'){cta.style.display='';updateNavCta();go('home');}
   else{cta.style.display='none';go('brand');}
@@ -351,7 +369,7 @@ async function loadCamps(){
   if(cr){cr.textContent=maxRate.toFixed(2);updCalc();}
   document.getElementById('connState').textContent='conectado ✓ · '+CAMPS.length+' campañas';
   const home=document.getElementById('homeCamps');
-  home.innerHTML=CAMPS.slice(0,3).map((c,i)=>campCard(c,i)).join('')||'<p class="muted">Aún no hay campañas.</p>';
+  home.innerHTML=CAMPS.slice(0,3).map((c,i)=>campCard(c,i)).join('')+(CAMPS.length<3?ghostCard():'');
   if(document.getElementById('discover').classList.contains('active'))renderCamps();
 }
 function campCard(c,i){
@@ -366,9 +384,14 @@ function campCard(c,i){
       <div class="meta"><span class="badge b-info">${esc(c.plataforma)}</span><span class="badge b-good">Activa</span></div>
     </div></div>`;
 }
+function ghostCard(){
+  return `<div class="camp ghost"><div class="cover" style="background:linear-gradient(135deg,#efe7dd,#e6dccd);display:grid;place-items:center"><span style="font-size:36px">🔜</span></div>
+    <div class="body"><h3>Más marcas en camino</h3><div class="metaline">Sumamos nuevas marcas cada semana. Regístrate para ser de los primeros en postear.</div>
+    <button class="btn sm accent" style="margin-top:auto" onclick="go('register')">Empezar gratis</button></div></div>`;
+}
 function renderCamps(){
   const g=document.getElementById('campGrid');
-  g.innerHTML=CAMPS.length?CAMPS.map((c,i)=>campCard(c,i)).join(''):'<p class="muted">Aún no hay campañas activas.</p>';
+  g.innerHTML=CAMPS.length?CAMPS.map((c,i)=>campCard(c,i)).join('')+ghostCard():'<p class="muted">Aún no hay campañas activas.</p>';
 }
 /* Render del brief que ve el creador: usa brief_json si existe; si no, cae al genérico. */
 function campBriefHTML(c){
@@ -574,7 +597,7 @@ async function updateNavCta(){
   const cta=document.getElementById('navCta');if(!cta)return;
   const {data}=await sb.auth.getSession();
   if(data.session){cta.textContent='Mi panel';cta.setAttribute('onclick',"go('creador')");}
-  else{cta.textContent='Registrarme';cta.setAttribute('onclick',"go('register')");}
+  else{cta.textContent='Empezar gratis';cta.setAttribute('onclick',"go('register')");}
 }
 function creadorLoginHTML(){
   return `<div class="authwrap"><div class="authcard">
@@ -630,9 +653,9 @@ async function renderCreadorDash(){
     <div class="amt">${money(disponible)}</div>
     <div class="prog"><span style="width:${pctMin}%"></span></div>
     <div style="font-size:12.5px;font-weight:700;opacity:.94;margin-top:8px">${alcanzo
-      ? '✅ Alcanzaste el mínimo — te pagamos por Yape / Plin en 24h'
+      ? '✅ Alcanzaste el mínimo — tu pago se procesa por Yape / Plin'
       : `${kviews(vistasAprob)} / ${kviews(MIN_VISTAS_COBRO)} vistas aprobadas para tu primer cobro`}</div>
-    <span class="chip">💸 Pagos por Yape / Plin en 24h</span>
+    <span class="chip">💸 Pagos por Yape / Plin</span>
   </div>
   <div class="cards4" style="margin-top:16px">
     <div class="mcard"><div class="t">Vistas totales</div><div class="v">${kviews(vistasTot)}</div></div>
@@ -646,7 +669,7 @@ async function renderCreadorDash(){
     <tbody>${list.map(c=>{const u=safeUrl(c.link);return `<tr>
       <td style="font-weight:600">${esc(c.campanas?c.campanas.titulo:'—')}<div class="muted" style="font-size:12px;font-weight:500">${esc(c.campanas?c.campanas.marca:'')}</div></td>
       <td>${kviews(c.vistas)}</td>
-      <td style="font-weight:800">${money(pay(c))}</td>
+      <td style="font-weight:800">${['aprobado','pagando','pagado'].includes(c.estado)?money(pay(c)):'<span class="muted">—</span>'}</td>
       <td>${ebadge(c.estado)}</td>
       <td>${u?`<a href="${esc(u)}" target="_blank" rel="noopener noreferrer" style="color:var(--accent)">ver ↗</a>`:'<span class="muted">—</span>'}</td>
     </tr>`;}).join('')}</tbody></table></div>`:'<div class="panel"><p class="muted">Aún no enviaste clips. Elige una campaña y sube tu primer clip para empezar a ganar.</p></div>'}
@@ -700,6 +723,8 @@ async function saveCreatorProfile(){
   creadorRow={...creadorRow,...upd};toast('Perfil actualizado ✓');
 }
 function setBrandTab(t){
+  /* Si salgo de Campañas con el formulario abierto, guardo el borrador para no perder lo escrito. */
+  if(brandTab==='camps'&&campForm)captureCampDraft();
   brandTab=t;['resumen','creators','clips','pagos','camps'].forEach(x=>{const b=document.getElementById('tb_'+x);if(b)b.classList.toggle('on',x===t);});
   if(t==='resumen')loadResumen();
   if(t==='creators')loadCreators();
@@ -742,7 +767,7 @@ async function loadResumen(){
 function crSetEstado(v){crEstado=v;crPage=0;loadCreators();}
 function crSearch(v){crQuery=(v||'').replace(/[,()*%]/g,' ').trim();crPage=0;loadCreators();}
 function crGo(d){crPage=Math.max(0,crPage+d);loadCreators();}
-function cbadge(e){return e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':'<span class="badge b-new">Nuevo</span>';}
+function cbadge(e){return (e==='aprobado'||e==='activo')?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pausado'?'<span class="badge b-warn">Pausado</span>':e==='contactado'?'<span class="badge b-info">Contactado</span>':'<span class="badge b-new">Nuevo</span>';}
 async function loadCreators(){
   const b=document.getElementById('brandBody');
   let q=sb.from('creadores').select('*',{count:'exact'}).order('created_at',{ascending:false});
@@ -795,7 +820,7 @@ async function setCreator(id,estado){
   toast(msg[estado]||'Actualizado ✓');
   loadCreators();
 }
-function ebadge(e){return e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pagando'?'<span class="badge b-good">Pagando</span>':'<span class="badge b-warn">En revisión</span>';}
+function ebadge(e){return e==='pagado'?'<span class="badge b-good">Pagado</span>':e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pagando'?'<span class="badge b-good">Pagando</span>':'<span class="badge b-warn">En revisión</span>';}
 async function loadClips(){
   const b=document.getElementById('brandBody');
   let q=sb.from('clips').select('*, campanas(titulo,marca,tarifa_1k)',{count:'exact'}).order('created_at',{ascending:false});
@@ -925,12 +950,13 @@ async function payCreator(cid,monto){
 const MARCAS=['Vialex','Royal Home'];
 const PLATS=['TikTok','Instagram'];
 let CAMPS_ADMIN=[],campForm=null; /* campForm: null | 'new' | id */
+let campDraft=null; /* borrador del formulario: sobrevive a cambios de sub-pestaña del panel */
 
 /* Gasto real derivado de los clips ya aprobados/pagando.
    La columna campanas.gastado quedó con datos de siembra y no se actualiza sola;
    la fuente de verdad son los clips. Ver CLAUDE.md → Gasto por campaña. */
 async function gastadoPorCampana(){
-  const {data,error}=await sb.from('clips').select('campana_id,vistas,campanas(tarifa_1k)').in('estado',['aprobado','pagando']);
+  const {data,error}=await sb.from('clips').select('campana_id,vistas,campanas(tarifa_1k)').in('estado',['aprobado','pagando','pagado']);
   if(error){console.error(error);return null;}
   const m={};
   (data||[]).forEach(c=>{m[c.campana_id]=(m[c.campana_id]||0)+(c.vistas||0)/1000*(c.campanas?.tarifa_1k||0);});
@@ -972,8 +998,8 @@ async function loadBrandCamps(){
     </tr>`).join('')||'<tr><td colspan="7" class="muted" style="padding:22px">Aún no hay campañas. Crea la primera con “+ Nueva campaña”.</td></tr>'}
     </tbody></table></div>`;
 }
-function openCampForm(id){campForm=id;loadBrandCamps();}
-function closeCampForm(){campForm=null;loadBrandCamps();}
+function openCampForm(id){campForm=id;campDraft=null;loadBrandCamps();}
+function closeCampForm(){campForm=null;campDraft=null;loadBrandCamps();}
 function ncMarcaChange(){
   const s=document.getElementById('r_ncmarca');
   document.getElementById('r_ncmarca2').style.display=s.value==='__otra'?'block':'none';
@@ -988,10 +1014,31 @@ function dynBlock(type,arr){
   const rows=(arr&&arr.length?arr:['']).map(v=>briefRow(type,v)).join('');
   return `<div class="dyn" id="dyn_${type}">${rows}</div><button type="button" class="addrow" onclick="addBriefRow('${type}')">+ Agregar otro</button>`;
 }
+/* Lee el estado actual del formulario del DOM (usado por saveCamp y por el borrador). */
+function readCampForm(){
+  const val=x=>{const el=document.getElementById(x);return el?el.value.trim():'';};
+  const collect=t=>[...document.querySelectorAll('[data-dyn="'+t+'"]')].map(i=>i.value.trim()).filter(Boolean);
+  const marcaSel=(document.getElementById('r_ncmarca')||{}).value||'';
+  return {titulo:val('r_nctitulo'),marcaSel,marca:marcaSel==='__otra'?val('r_ncmarca2'):marcaSel,
+    categoria:val('r_nccat'),plataforma:(document.getElementById('r_ncplat')||{}).value||'',
+    tarifa:val('r_nctarifa'),pres:val('r_ncpres'),hashtag:val('r_nchash'),objetivo:val('r_ncobj'),
+    guion:val('r_ncguion'),duracion:val('r_ncdur'),menciones:val('r_ncment'),
+    dos:collect('dos'),donts:collect('donts'),refs:collect('refs'),docUrl:val('r_ncdoc'),
+    estado:(document.getElementById('r_ncestado')||{}).value||'activa'};
+}
+/* Guarda el borrador si el formulario está montado (antes de re-renderizar por cambio de pestaña). */
+function captureCampDraft(){if(document.getElementById('r_nctitulo'))campDraft=readCampForm();}
 function campFormHTML(c){
   const e=c||{},isEdit=!!c;
-  const otra=!!(isEdit&&e.marca&&!MARCAS.includes(e.marca));
   const bj=(c&&c.brief_json&&typeof c.brief_json==='object')?c.brief_json:{};
+  const d=campDraft; /* el borrador tiene prioridad → sobrevive a cambios de sub-pestaña */
+  const v={titulo:d?d.titulo:(e.titulo||''),marca:d?d.marca:(e.marca||''),categoria:d?d.categoria:(e.categoria||''),
+    plataforma:d?d.plataforma:(e.plataforma||''),tarifa:d?d.tarifa:(e.tarifa_1k??''),pres:d?d.pres:(e.presupuesto??''),
+    hashtag:d?d.hashtag:(e.hashtag||''),objetivo:d?d.objetivo:(bj.objetivo||e.brief||''),guion:d?d.guion:(bj.guion||''),
+    duracion:d?d.duracion:(bj.duracion||''),menciones:d?d.menciones:(bj.menciones||''),
+    dos:d?d.dos:(bj.dos||[]),donts:d?d.donts:(bj.donts||[]),refs:d?d.refs:(bj.refs||[]),
+    docUrl:d?d.docUrl:(bj.docUrl||''),estado:d?d.estado:(e.estado||'activa')};
+  const otra=!!(v.marca&&!MARCAS.includes(v.marca));
   return `<div class="panel" style="margin-bottom:16px">
     <h3 style="margin-bottom:2px">${isEdit?'Editar campaña':'Nueva campaña'}</h3>
     <div class="muted" style="font-size:13px">Mientras más claro el brief, mejores clips vas a recibir.</div>
@@ -1000,23 +1047,23 @@ function campFormHTML(c){
       <div class="fh"><span class="fnum">1</span> Lo básico</div>
       <div class="fgrid" style="margin-top:14px">
         <div><label class="f">Título de la campaña</label>
-          <input class="f" id="r_nctitulo" value="${esc(e.titulo)}" placeholder="Verano Vialex — tu look del día">
+          <input class="f" id="r_nctitulo" value="${esc(v.titulo)}" placeholder="Verano Vialex — tu look del día">
           <div class="ferr" id="e_nctitulo">Ingresa un título</div></div>
         <div><label class="f">Marca</label>
           <select class="f" id="r_ncmarca" onchange="ncMarcaChange()">
             <option value="">Selecciona…</option>
-            ${MARCAS.map(m=>`<option ${e.marca===m?'selected':''}>${m}</option>`).join('')}
+            ${MARCAS.map(m=>`<option ${v.marca===m?'selected':''}>${m}</option>`).join('')}
             <option value="__otra" ${otra?'selected':''}>Otra…</option>
           </select>
           <div class="ferr" id="e_ncmarca">Selecciona la marca</div>
-          <input class="f" id="r_ncmarca2" style="margin-top:8px;display:${otra?'block':'none'}" value="${otra?esc(e.marca):''}" placeholder="Nombre de la marca">
+          <input class="f" id="r_ncmarca2" style="margin-top:8px;display:${otra?'block':'none'}" value="${otra?esc(v.marca):''}" placeholder="Nombre de la marca">
           <div class="ferr" id="e_ncmarca2">Ingresa el nombre de la marca</div></div>
         <div><label class="f">Categoría</label>
-          <input class="f" id="r_nccat" value="${esc(e.categoria)}" placeholder="Moda, Hogar, Reto…">
+          <input class="f" id="r_nccat" value="${esc(v.categoria)}" placeholder="Moda, Hogar, Reto…">
           <div class="ferr" id="e_nccat">Ingresa una categoría</div></div>
         <div><label class="f">Plataforma</label>
           <select class="f" id="r_ncplat"><option value="">Selecciona…</option>
-            ${PLATS.map(p=>`<option ${e.plataforma===p?'selected':''}>${p}</option>`).join('')}</select>
+            ${PLATS.map(p=>`<option ${v.plataforma===p?'selected':''}>${p}</option>`).join('')}</select>
           <div class="ferr" id="e_ncplat">Selecciona la plataforma</div></div>
       </div>
     </div>
@@ -1026,10 +1073,10 @@ function campFormHTML(c){
       <div class="fhint">Cuánto pagas por cada 1,000 vistas y el presupuesto total de la campaña.</div>
       <div class="fgrid" style="margin-top:10px">
         <div><label class="f">Tarifa por 1,000 vistas (S/)</label>
-          <input class="f" id="r_nctarifa" type="number" step="0.05" min="0" value="${e.tarifa_1k??''}" placeholder="0.80">
+          <input class="f" id="r_nctarifa" type="number" step="0.05" min="0" value="${v.tarifa}" placeholder="0.80">
           <div class="ferr" id="e_nctarifa">Ingresa una tarifa mayor a 0</div></div>
         <div><label class="f">Presupuesto total (S/)</label>
-          <input class="f" id="r_ncpres" type="number" step="100" min="0" value="${e.presupuesto??''}" placeholder="6000">
+          <input class="f" id="r_ncpres" type="number" step="100" min="0" value="${v.pres}" placeholder="6000">
           <div class="ferr" id="e_ncpres">Ingresa un presupuesto mayor a 0</div></div>
       </div>
     </div>
@@ -1039,40 +1086,40 @@ function campFormHTML(c){
       <div class="fhint">Esto es lo que ve el creador. Sé específico: mejor brief = mejores clips.</div>
 
       <label class="f">🎯 Objetivo — ¿qué quieres lograr?</label>
-      <textarea class="f" id="r_ncobj" rows="2" placeholder="Ej: Mostrar lo fácil que es cocinar con Royal Home en menos de 15s, con energía y buena luz.">${esc(bj.objetivo||e.brief||'')}</textarea>
+      <textarea class="f" id="r_ncobj" rows="2" placeholder="Ej: Mostrar lo fácil que es cocinar con Royal Home en menos de 15s, con energía y buena luz.">${esc(v.objetivo)}</textarea>
       <div class="ferr" id="e_ncobj">Cuéntale al creador qué buscas</div>
 
       <label class="f">🎬 Guión / plan sugerido del video</label>
-      <textarea class="f" id="r_ncguion" rows="4" placeholder="1) Hook los primeros 2s&#10;2) Muestra el producto en uso&#10;3) Cierra con el nombre de la marca">${esc(bj.guion||'')}</textarea>
+      <textarea class="f" id="r_ncguion" rows="4" placeholder="1) Hook los primeros 2s&#10;2) Muestra el producto en uso&#10;3) Cierra con el nombre de la marca">${esc(v.guion)}</textarea>
 
       <div class="fgrid" style="margin-top:6px">
         <div><label class="f">⏱️ Duración sugerida</label>
-          <input class="f" id="r_ncdur" value="${esc(bj.duracion||'')}" placeholder="15–30 segundos"></div>
+          <input class="f" id="r_ncdur" value="${esc(v.duracion)}" placeholder="15–30 segundos"></div>
         <div><label class="f"># Hashtag</label>
-          <input class="f" id="r_nchash" value="${esc(e.hashtag)}" placeholder="#VialexVerano"></div>
+          <input class="f" id="r_nchash" value="${esc(v.hashtag)}" placeholder="#VialexVerano"></div>
       </div>
       <label class="f">@ Menciones obligatorias</label>
-      <input class="f" id="r_ncment" value="${esc(bj.menciones||'')}" placeholder="@vialex.pe — etiqueta a la marca">
+      <input class="f" id="r_ncment" value="${esc(v.menciones)}" placeholder="@vialex.pe — etiqueta a la marca">
 
       <label class="f" style="margin-top:20px">✅ Qué SÍ hacer</label>
-      ${dynBlock('dos',bj.dos)}
+      ${dynBlock('dos',v.dos)}
 
       <label class="f" style="margin-top:20px">🚫 Qué evitar</label>
-      ${dynBlock('donts',bj.donts)}
+      ${dynBlock('donts',v.donts)}
 
       <label class="f" style="margin-top:20px">🔗 Ejemplos / referencias</label>
-      ${dynBlock('refs',bj.refs)}
+      ${dynBlock('refs',v.refs)}
 
       <label class="f" style="margin-top:20px">📄 Guía completa <span class="muted" style="font-weight:500">· opcional, link a un Google Doc con todo el detalle</span></label>
-      <input class="f" id="r_ncdoc" value="${esc(bj.docUrl||'')}" placeholder="https://docs.google.com/...">
+      <input class="f" id="r_ncdoc" value="${esc(v.docUrl)}" placeholder="https://docs.google.com/...">
     </div>
 
     <div class="fsec">
       <div class="fh"><span class="fnum">4</span> Publicación</div>
       <label class="f">Estado</label>
       <select class="f" id="r_ncestado">
-        <option value="activa" ${e.estado!=='pausada'?'selected':''}>Activa · visible en el discover</option>
-        <option value="pausada" ${e.estado==='pausada'?'selected':''}>Pausada · oculta para creadores</option>
+        <option value="activa" ${v.estado!=='pausada'?'selected':''}>Activa · visible en el discover</option>
+        <option value="pausada" ${v.estado==='pausada'?'selected':''}>Pausada · oculta para creadores</option>
       </select>
     </div>
 
@@ -1089,32 +1136,21 @@ function campErr(err){
     : 'Error al guardar. Revisa la consola.';
 }
 async function saveCamp(id){
-  const val=x=>{const el=document.getElementById(x);return el?el.value.trim():'';};
-  const marcaSel=document.getElementById('r_ncmarca').value;
-  const marca=marcaSel==='__otra'?val('r_ncmarca2'):marcaSel;
-  const titulo=val('r_nctitulo');
-  const categoria=val('r_nccat');
-  const plataforma=document.getElementById('r_ncplat').value;
-  const tarifa=parseFloat(document.getElementById('r_nctarifa').value);
-  const pres=parseFloat(document.getElementById('r_ncpres').value);
-  const hashtag=val('r_nchash');
-  const objetivo=val('r_ncobj');
-  const estado=document.getElementById('r_ncestado').value;
-  const collect=t=>[...document.querySelectorAll('[data-dyn="'+t+'"]')].map(i=>i.value.trim()).filter(Boolean);
-  const brief_json={objetivo,guion:val('r_ncguion'),duracion:val('r_ncdur'),menciones:val('r_ncment'),
-    dos:collect('dos'),donts:collect('donts'),refs:collect('refs'),docUrl:val('r_ncdoc')};
+  const f=readCampForm();
+  const tarifa=parseFloat(f.tarifa),pres=parseFloat(f.pres);
   let bad=false;
-  bad=showErr('e_nctitulo',!titulo)|bad;
-  bad=showErr('e_ncmarca',!marcaSel)|bad;
-  bad=showErr('e_ncmarca2',marcaSel==='__otra'&&!marca)|bad;
-  bad=showErr('e_nccat',!categoria)|bad;
-  bad=showErr('e_ncplat',!plataforma)|bad;
+  bad=showErr('e_nctitulo',!f.titulo)|bad;
+  bad=showErr('e_ncmarca',!f.marcaSel)|bad;
+  bad=showErr('e_ncmarca2',f.marcaSel==='__otra'&&!f.marca)|bad;
+  bad=showErr('e_nccat',!f.categoria)|bad;
+  bad=showErr('e_ncplat',!f.plataforma)|bad;
   bad=showErr('e_nctarifa',!(tarifa>0))|bad;
   bad=showErr('e_ncpres',!(pres>0))|bad;
-  bad=showErr('e_ncobj',!objetivo)|bad;
+  bad=showErr('e_ncobj',!f.objetivo)|bad;
   if(bad){toast('Revisa los campos marcados');return;}
   const btn=document.getElementById('ncBtn');btn.disabled=true;btn.textContent='Guardando…';
-  const base={titulo,marca,categoria,plataforma,tarifa_1k:tarifa,presupuesto:pres,hashtag:hashtag||null,brief:objetivo||null,estado};
+  const brief_json={objetivo:f.objetivo,guion:f.guion,duracion:f.duracion,menciones:f.menciones,dos:f.dos,donts:f.donts,refs:f.refs,docUrl:f.docUrl};
+  const base={titulo:f.titulo,marca:f.marca,categoria:f.categoria,plataforma:f.plataforma,tarifa_1k:tarifa,presupuesto:pres,hashtag:f.hashtag||null,brief:f.objetivo||null,estado:f.estado};
   let {error}=id
     ? await sb.from('campanas').update({...base,brief_json}).eq('id',id)
     : await sb.from('campanas').insert({...base,brief_json});
@@ -1125,7 +1161,7 @@ async function saveCamp(id){
   }
   if(error){btn.disabled=false;btn.textContent=id?'Guardar cambios':'Crear campaña';toast(campErr(error));return;}
   toast(id?'Campaña actualizada ✓':'Campaña creada ✓');
-  campForm=null;
+  campForm=null;campDraft=null;
   await loadCamps();
   loadBrandCamps();
 }
