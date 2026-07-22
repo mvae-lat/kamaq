@@ -182,6 +182,17 @@
   .faq summary::after{content:"+";color:var(--accent);font-size:24px;font-weight:400;line-height:1}
   .faq[open] summary::after{content:"–"}
   .faq p{color:var(--mut2);font-size:14.5px;line-height:1.55;margin-top:12px}
+  /* skeletons de carga (percepción premium, estilo SideShift/Whop) */
+  @keyframes shimmer{0%{background-position:-450px 0}100%{background-position:450px 0}}
+  .skel{background:linear-gradient(90deg,#e9e1d6 25%,#f3ede4 50%,#e9e1d6 75%);background-size:900px 100%;animation:shimmer 1.25s infinite linear;border-radius:10px}
+  .skelcard{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
+  .skelcard .sc-cover{height:130px;border-radius:0}
+  .skelcard .sc-body{padding:18px;display:flex;flex-direction:column;gap:11px}
+  /* consistencia: hover sutil en stat/mcard (como las cards de campaña) */
+  .mcard,.stat{transition:transform .18s,box-shadow .18s}
+  .mcard:hover,.stat:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
+  /* accesibilidad: foco visible en controles tipo pill/botón */
+  .btn:focus-visible,.toggle button:focus-visible,.subnav button:focus-visible,.installbtn:focus-visible,.addrow:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
   /* formulario de campaña por secciones (más aire, menos "pegado") */
   .fsec{margin-top:28px;padding-top:24px;border-top:1px solid var(--border)}
   .fsec.first{margin-top:6px;padding-top:0;border-top:none}
@@ -208,7 +219,7 @@
   .reqchip{background:#17130e0a;border:1px solid var(--border);border-radius:999px;padding:7px 14px;font-size:13px;font-weight:700}
   .bsub{font-size:13px;font-weight:800;color:var(--mut2);text-transform:uppercase;letter-spacing:.04em;margin-top:18px}
   @media(max-width:640px){.fgrid{grid-template-columns:1fr}}
-  @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{grid-template-columns:1fr}.hero h1{font-size:44px}.nav-links{display:none}}
+  @media(max-width:900px){.stats,.steps,.cards4{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:repeat(2,1fr)}.detail{display:flex;flex-direction:column}.detail .sticky{order:-1;position:static;top:auto}.hero h1{font-size:44px}.nav-links{display:none}}
   @media(max-width:560px){.grid,.stats,.cards4{grid-template-columns:1fr}.hero h1{font-size:38px}.row2,.crow{grid-template-columns:1fr}}
 </style>
 </head>
@@ -329,6 +340,9 @@ const safeHttps=u=>{try{const x=new URL(String(u??''));return x.protocol==='http
 const grads=['linear-gradient(135deg,#0e7490,#22d3ee)','linear-gradient(135deg,#b45309,#fbbf24)','linear-gradient(135deg,#7c2d12,#ff6a2c)','linear-gradient(135deg,#065f46,#34d399)','linear-gradient(135deg,#9f1239,#fb7185)','linear-gradient(135deg,#1e3a8a,#60a5fa)'];
 const gradFor=i=>grads[i%grads.length];
 function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+/* Skeletons de carga: cards para grillas, filas para tablas/paneles. */
+function skelCards(n){let h='';for(let i=0;i<(n||3);i++)h+=`<div class="skelcard"><div class="skel sc-cover"></div><div class="sc-body"><div class="skel" style="height:18px;width:70%"></div><div class="skel" style="height:26px;width:45%"></div><div class="skel" style="height:14px;width:55%"></div><div class="skel" style="height:22px;width:38%;border-radius:999px"></div></div></div>`;return h;}
+function skelRows(n){let h='<div class="cards4">';for(let i=0;i<4;i++)h+='<div class="mcard"><div class="skel" style="height:13px;width:60%"></div><div class="skel" style="height:28px;width:45%;margin-top:10px"></div></div>';h+='</div><div class="tablecard" style="padding:16px;display:flex;flex-direction:column;gap:13px;margin-top:16px">';for(let i=0;i<(n||5);i++)h+=`<div class="skel" style="height:20px;width:${['85%','70%','78%','62%','80%'][i%5]}"></div>`;return h+'</div>';}
 let CAMPS=[];
 /* Mínimo de vistas (acumuladas y aprobadas) para habilitar el primer cobro. */
 const MIN_VISTAS_COBRO=10000;
@@ -635,7 +649,7 @@ async function renderCreador(){
   const {data:cr}=await sb.from('creadores').select('*').eq('user_id',creadorSession.user.id).maybeSingle();
   creadorRow=cr;
   if(!cr){root.innerHTML=`<div class="authwrap"><div class="authcard"><div class="eyebrow">Kamaq</div><h2>Completa tu registro</h2><div class="subt">Tu cuenta (${esc(creadorSession.user.email)}) todavía no tiene perfil de creador.</div><button class="btn accent wide" style="margin-top:18px" onclick="go('register')">Registrarme como creador</button><div class="note" style="margin-top:14px"><a style="cursor:pointer;font-weight:700" onclick="logoutCreador()">Cerrar sesión</a></div></div></div>`;return;}
-  root.innerHTML='<p class="muted">Cargando tu panel…</p>';
+  root.innerHTML=skelRows(4);
   await renderCreadorDash();
 }
 async function renderCreadorDash(){
@@ -749,7 +763,7 @@ function setBrandTab(t){
 /* ===== RESUMEN / FUNNEL (por UTM) ===== */
 async function loadResumen(){
   const b=document.getElementById('brandBody');
-  b.innerHTML='<p class="muted">Cargando resumen…</p>';
+  b.innerHTML=skelRows(6);
   const {data,error}=await sb.rpc('funnel_creadores');
   if(error){b.innerHTML='<p class="muted">Error al cargar el resumen.</p>';console.error(error);return;}
   const rows=data||[];
@@ -783,7 +797,7 @@ function crSearch(v){crQuery=(v||'').replace(/[,()*%]/g,' ').trim();crPage=0;loa
 function crGo(d){crPage=Math.max(0,crPage+d);loadCreators();}
 function cbadge(e){return (e==='aprobado'||e==='activo')?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pausado'?'<span class="badge b-warn">Pausado</span>':e==='contactado'?'<span class="badge b-info">Contactado</span>':'<span class="badge b-new">Nuevo</span>';}
 async function loadCreators(){
-  const b=document.getElementById('brandBody');
+  const b=document.getElementById('brandBody');b.innerHTML=skelRows(8);
   let q=sb.from('creadores').select('*',{count:'exact'}).order('created_at',{ascending:false});
   if(crEstado)q=q.eq('estado',crEstado);
   if(crQuery)q=q.or(`nombre.ilike.%${crQuery}%,whatsapp.ilike.%${crQuery}%,email.ilike.%${crQuery}%,fuente.ilike.%${crQuery}%`);
@@ -836,7 +850,7 @@ async function setCreator(id,estado){
 }
 function ebadge(e){return e==='pagado'?'<span class="badge b-good">Pagado</span>':e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pagando'?'<span class="badge b-good">Pagando</span>':'<span class="badge b-warn">En revisión</span>';}
 async function loadClips(){
-  const b=document.getElementById('brandBody');
+  const b=document.getElementById('brandBody');b.innerHTML=skelRows(8);
   let q=sb.from('clips').select('*, campanas(titulo,marca,tarifa_1k)',{count:'exact'}).order('created_at',{ascending:false});
   if(clEstado)q=q.eq('estado',clEstado);
   const from=clPage*BR_PAGE,to=from+BR_PAGE-1;
@@ -908,7 +922,7 @@ async function setClip(id,estado){
    el Yape/Plin. Es el tablero operativo del desembolso. */
 async function loadPayouts(){
   const b=document.getElementById('brandBody');
-  b.innerHTML='<p class="muted">Cargando pagos…</p>';
+  b.innerHTML=skelRows(5);
   const {data,error}=await sb.from('clips')
     .select('id,vistas,creador_id,campanas(tarifa_1k),creadores(nombre,whatsapp,estado)')
     .in('estado',['aprobado','pagando']);
@@ -984,7 +998,7 @@ function gastCell(g,pres){
     <div style="height:5px;border-radius:5px;background:#17130e12;margin-top:5px;overflow:hidden"><div style="height:100%;width:${p}%;background:${p>=100?'var(--bad)':'var(--accent)'}"></div></div>`;
 }
 async function loadBrandCamps(){
-  const b=document.getElementById('brandBody');
+  const b=document.getElementById('brandBody');if(!campForm)b.innerHTML=skelRows(4);
   const [res,gast]=await Promise.all([
     sb.from('campanas').select('*').order('created_at',{ascending:true}),
     gastadoPorCampana()
@@ -1213,6 +1227,8 @@ window.addEventListener('popstate',e=>{
   if(s.v==='campaign'&&s.id){openCampaign(s.id,true);return;}
   go(s.v||'home',null,true);
 });
+document.getElementById('homeCamps').innerHTML=skelCards(3);
+document.getElementById('campGrid').innerHTML=skelCards(3);
 loadCamps();
 updateNavCta();
 if(_magicReturn){setRole('creator');go('creador');}
