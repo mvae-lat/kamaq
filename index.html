@@ -315,7 +315,7 @@
 <section class="view" id="brand"><div class="wrap" id="brandRoot"></div></section>
 
 <footer><div class="wrap">Kamaq · Vialex &amp; Royal Home 🇵🇪 → LATAM · <span id="connState">conectando…</span></div></footer>
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 <button class="installbtn" id="installBtn" onclick="doInstall()">📲 Instalar Kamaq</button>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -400,7 +400,7 @@ async function loadCamps(){
   if(document.getElementById('discover').classList.contains('active'))renderCamps();
 }
 function campCard(c,i){
-  return `<div class="camp" onclick="openCampaign('${c.id}')">
+  return `<div class="camp" role="button" tabindex="0" aria-label="Ver campaña ${esc(c.titulo)}" onclick="openCampaign('${c.id}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openCampaign('${c.id}')}">
     <div class="cover" style="background:${gradFor(i)}">
       <span class="ratebadge">${money(c.tarifa_1k)} / 1K</span>
       <div class="who"><span class="ic" style="background:${brandColor(c.marca)}">${esc((c.marca||'?')[0])}</span> ${esc(c.marca)}</div></div>
@@ -477,6 +477,8 @@ async function submitClip(campId,plat){
      El tráfico de ads llega sin sesión, así que acá lo mandamos a entrar/registrarse. */
   const {data:se}=await sb.auth.getSession();
   if(!se.session){
+    /* Guarda el clip para retomarlo tras el login (no perder la intención del tráfico de ads). */
+    try{localStorage.setItem('kamaq_pending_clip',JSON.stringify({campId,link}));}catch(_){}
     toast('Entra a tu cuenta para enviar tu clip y poder cobrar');
     setRole('creator');go('creador');return;
   }
@@ -487,7 +489,18 @@ async function submitClip(campId,plat){
   const btn=document.getElementById('clipBtn');btn.disabled=true;btn.textContent='Enviando…';
   const {error}=await sb.from('clips').insert({campana_id:campId,link,plataforma:plat,estado:'revision',creador_id:creadorRow.id});
   if(error){btn.disabled=false;btn.textContent='Enviar para revisión';toast('Error al enviar. Intenta de nuevo.');return;}
-  btn.textContent='✓ Enviado';toast('¡Clip enviado! Entrará a revisión.');
+  toast('¡Clip enviado! Entrará a revisión.');
+  const panel=btn.closest('.panel');
+  if(panel)panel.innerHTML='<div style="text-align:center;padding:6px 0"><div style="font-size:42px">✅</div><h3 style="margin:8px 0 4px">¡Clip enviado!</h3><p class="muted" style="font-size:14px;margin-bottom:16px">Lo revisamos y verás el estado (y tu pago) en tu panel.</p><button class="btn accent wide" onclick="setRole(\'creator\');go(\'creador\')">Ver mis clips →</button></div>';
+}
+/* Retoma un clip que quedó pendiente antes de pedir login (cierra el loop sin fricción). */
+function resumePendingClip(){
+  let p=null;try{p=JSON.parse(localStorage.getItem('kamaq_pending_clip')||'null');}catch(_){}
+  if(!p||!p.campId)return;
+  localStorage.removeItem('kamaq_pending_clip');
+  if(!CAMPS.find(x=>x.id===p.campId))return;
+  openCampaign(p.campId);
+  setTimeout(()=>{const inp=document.getElementById('clip_link');if(inp){inp.value=p.link||'';inp.focus();}toast('Tu clip está listo — dale "Enviar para revisión" ✅');},120);
 }
 
 /* ===== REGISTRO (multi-paso → DB) ===== */
@@ -593,11 +606,11 @@ async function renderBrand(){
   if(!session){
     root.innerHTML=`<div class="authwrap"><div class="authcard">
       <div class="eyebrow">Panel interno · Kamaq</div><h2>Ingresa a tu panel</h2><div class="subt">Solo para el equipo de Vialex &amp; Royal Home</div>
-      <label class="f">Email</label><input class="f" id="l_email" placeholder="equipo@mvae.lat">
-      <label class="f">Contraseña</label><input class="f" id="l_pass" type="password" placeholder="••••••••">
+      <label class="f">Email</label><input class="f" id="l_email" placeholder="equipo@mvae.lat" autofocus onkeydown="if(event.key==='Enter')document.getElementById('l_pass').focus()">
+      <label class="f">Contraseña</label><input class="f" id="l_pass" type="password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
       <div class="ferr" id="l_err">Email o contraseña incorrectos</div>
       <button class="btn accent wide" id="loginBtn" style="margin-top:18px" onclick="login()">Ingresar</button>
-      <div class="note">¿Aún no tienes usuario de equipo? Se crea en Supabase → Authentication → Add user.</div>
+      <div class="note">¿Necesitas acceso al panel? Contacta al administrador de Kamaq.</div>
     </div></div>`;return;
   }
   const {data:isAdmin}=await sb.rpc('es_admin');
@@ -633,7 +646,7 @@ function creadorLoginHTML(){
     <label class="f">Email</label><input class="f" id="cl_email" placeholder="tucorreo@email.com">
     <button class="btn ghost wide" id="cmlBtn" style="margin-top:12px" onclick="creadorMagicLink()">Enviarme un link de acceso ✉️</button>
     <div style="text-align:center;color:var(--mut2);font-size:12px;margin:16px 0;font-weight:700">— o con contraseña —</div>
-    <input class="f" id="cl_pass" type="password" placeholder="Tu contraseña">
+    <input class="f" id="cl_pass" type="password" placeholder="Tu contraseña" onkeydown="if(event.key==='Enter')creadorLogin()">
     <div class="ferr" id="cl_err">Email o contraseña incorrectos</div>
     <div style="display:flex;gap:10px;margin-top:12px">
       <button class="btn accent" style="flex:1" id="clBtn" onclick="creadorLogin()">Ingresar</button>
@@ -651,6 +664,7 @@ async function renderCreador(){
   if(!cr){root.innerHTML=`<div class="authwrap"><div class="authcard"><div class="eyebrow">Kamaq</div><h2>Completa tu registro</h2><div class="subt">Tu cuenta (${esc(creadorSession.user.email)}) todavía no tiene perfil de creador.</div><button class="btn accent wide" style="margin-top:18px" onclick="go('register')">Registrarme como creador</button><div class="note" style="margin-top:14px"><a style="cursor:pointer;font-weight:700" onclick="logoutCreador()">Cerrar sesión</a></div></div></div>`;return;}
   root.innerHTML=skelRows(4);
   await renderCreadorDash();
+  resumePendingClip();
 }
 async function renderCreadorDash(){
   const root=document.getElementById('creadorRoot');
@@ -808,7 +822,7 @@ async function loadCreators(){
   const opts=['','nuevo','contactado','aprobado','activo','pausado','rechazado'];
   const bar=`<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
     <select class="vinput" style="width:auto;padding:8px 10px" onchange="crSetEstado(this.value)">${opts.map(o=>`<option value="${o}"${o===crEstado?' selected':''}>${o===''?'Todos los estados':o}</option>`).join('')}</select>
-    <input class="vinput" style="width:240px" placeholder="Buscar nombre / WhatsApp / email…" value="${esc(crQuery)}" onchange="crSearch(this.value)">
+    <input class="vinput" style="width:240px" placeholder="Buscar nombre / WhatsApp / email… (Enter)" value="${esc(crQuery)}" onchange="crSearch(this.value)" onkeydown="if(event.key==='Enter')crSearch(this.value)">
     <span class="muted" style="font-size:13px;margin-left:auto">${total} creador${total===1?'':'es'}</span>
   </div>`;
   if(!total){b.innerHTML=bar+'<div class="panel"><p class="muted">No hay creadores con ese filtro.</p></div>';return;}
@@ -846,7 +860,10 @@ async function setCreator(id,estado){
   if(error){toast('Error al actualizar');return;}
   const msg={aprobado:'Creador aprobado ✓',rechazado:'Creador rechazado',pausado:'Creador pausado',nuevo:'Creador reabierto'};
   toast(msg[estado]||'Actualizado ✓');
-  loadCreators();
+  if(crEstado){loadCreators();return;} /* con filtro activo, recargar para respetarlo */
+  const row=document.getElementById('cr_'+id);
+  if(row){row.querySelector('.cest').innerHTML=cbadge(estado);row.querySelector('.cact').innerHTML=crActions({id,estado});}
+  else loadCreators();
 }
 function ebadge(e){return e==='pagado'?'<span class="badge b-good">Pagado</span>':e==='aprobado'?'<span class="badge b-good">Aprobado</span>':e==='rechazado'?'<span class="badge b-bad">Rechazado</span>':e==='pagando'?'<span class="badge b-good">Pagando</span>':'<span class="badge b-warn">En revisión</span>';}
 async function loadClips(){
@@ -900,7 +917,8 @@ async function updClip(id,val){
   const v=Math.max(0,parseInt(val||0));
   const row=document.getElementById('cl_'+id);const rate=parseFloat(row.dataset.rate)||0;
   row.querySelector('.pay').textContent=money(v/1000*rate);
-  await sb.from('clips').update({vistas:v}).eq('id',id);
+  const {error}=await sb.from('clips').update({vistas:v}).eq('id',id);
+  if(error){toast('⚠️ No se pudo guardar las vistas — intenta de nuevo');console.error(error);}
 }
 /* Actualiza el estado de un clip. Al marcar 'pagado' sella pagado_at para auditoría;
    si la columna aún no existe (falta correr db/pagos.sql) reintenta solo con estado. */
@@ -914,7 +932,10 @@ async function setClip(id,estado){
   if(error){toast('Error al actualizar el clip');console.error(error);return;}
   const msg={aprobado:'Clip aprobado ✓',rechazado:'Clip rechazado',pagado:'Clip marcado como pagado 💸',revision:'Clip reabierto'};
   toast(msg[estado]||'Actualizado ✓');
-  loadClips();
+  if(clEstado){loadClips();return;} /* con filtro activo, recargar para respetarlo */
+  const row=document.getElementById('cl_'+id);
+  if(row){row.querySelector('.est').innerHTML=ebadge(estado);row.lastElementChild.innerHTML=clipActions({id,estado});}
+  else loadClips();
 }
 /* ===== POR PAGAR (payouts agrupados por creador) ===== */
 /* Suma los clips aprobados (aún no pagados) por creador y da un botón para
