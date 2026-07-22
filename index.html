@@ -351,7 +351,7 @@ function setRole(r){
   if(r==='creator'){cta.style.display='';updateNavCta();go('home');}
   else{cta.style.display='none';go('brand');}
 }
-function go(view,arg){
+function go(view,arg,noPush){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   document.getElementById(view).classList.add('active');
   window.scrollTo({top:0,behavior:'smooth'});
@@ -359,6 +359,8 @@ function go(view,arg){
   if(view==='register'){regStep=1;regData={};renderReg();}
   if(view==='brand')renderBrand();
   if(view==='creador')renderCreador();
+  /* Registra la vista en el historial para que el botón "atrás" del navegador/celular funcione. */
+  if(!noPush)history.pushState({v:view},'');
 }
 
 /* ===== CAMPAÑAS (desde DB) ===== */
@@ -434,7 +436,7 @@ function campBriefHTML(c){
     <div class="muted" style="font-size:13.5px;margin-top:16px">👁️ Solo vistas orgánicas cuentan — nada de bots. Publica desde tu propia cuenta.</div>
     ${doc}`;
 }
-function openCampaign(id){
+function openCampaign(id,noPush){
   const i=CAMPS.findIndex(x=>x.id===id);const c=CAMPS[i];if(!c)return;
   document.getElementById('campDetail').innerHTML=`
     <div class="detail"><div>
@@ -451,8 +453,9 @@ function openCampaign(id){
       <label class="f">Link del video publicado</label><input class="f" id="clip_link" placeholder="https://...">
       <button class="btn accent wide" style="margin-top:16px" id="clipBtn" onclick="submitClip('${c.id}','${c.plataforma||''}')">Enviar para revisión</button>
       <div class="note">Necesitas tu cuenta de Kamaq para enviar y cobrar. Estimado: 100K vistas ≈ <b>${money((c.tarifa_1k||0)*100)}</b></div></div></div></div>
-    <div class="back" onclick="go('discover')">← Volver a campañas</div>`;
-  go('campaign');
+    <div class="back" onclick="history.back()">← Volver</div>`;
+  go('campaign',null,true);
+  if(!noPush)history.pushState({v:'campaign',id},'');
 }
 async function submitClip(campId,plat){
   const link=document.getElementById('clip_link').value.trim();
@@ -1200,6 +1203,15 @@ sb.auth.onAuthStateChange((event,sess)=>{
   const active=document.querySelector('.view.active');
   if(active&&active.id==='creador')renderCreador();
   if(active&&active.id==='brand')renderBrand();
+});
+/* ===== HISTORIAL / BOTÓN ATRÁS ===== */
+/* El botón "atrás" del navegador/celular dispara popstate → mostramos la vista guardada. */
+history.replaceState({v:'home'},'');
+window.addEventListener('popstate',e=>{
+  const s=e.state;
+  if(!s){go('home',null,true);return;}
+  if(s.v==='campaign'&&s.id){openCampaign(s.id,true);return;}
+  go(s.v||'home',null,true);
 });
 loadCamps();
 updateNavCta();
