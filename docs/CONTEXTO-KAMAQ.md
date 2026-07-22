@@ -20,6 +20,30 @@ Operado por **MVAE** (empresa peruana). Se está preparando para **levantar capi
 cobro: **10,000 vistas acumuladas**. Revisión de vistas y pago **manuales** hoy (no hay
 tracking automático ni pago automático todavía). 0% de comisión al creador.
 
+## 1b. Referencias del rubro (benchmark)
+Kamaq se diseña contra estas plataformas de clipping/UGC-rewards. Úsalas para comparar
+UX, copy y modelo:
+- **Whop Content Rewards** — `whop.com/content-rewards`, `docs.whop.com`. La más grande;
+  tiene **app nativa** iOS/Android (pero es un marketplace enorme, el clipping es una función
+  más). Campos de campaña: título, tipo (clipping/UGC), categoría, presupuesto, tarifa por 1k,
+  plataformas, ejemplos, deadlines, do's/don'ts, guía enlazada.
+- **contentrewards.com** — "No audience required — te pagan por las vistas del clip, no por
+  seguidores". Muestra números agregados (creadores, vistas). Web.
+- **sideshift.app** — fila de **stat-cards**, énfasis en "Paid Out $X". Web.
+- **8x.social** — mockups de **clips verticales** como protagonistas; "no follower minimum".
+  Mobile-first. Web.
+
+**Patrones que adoptamos de ellas:**
+1. **Número héroe = el dinero del creador** (calculadora de ganancias en el hero; balance
+   grande en el dashboard). 2. **Gancho "sin seguidores mínimos"** (mata la objeción #1 del
+   tráfico frío). 3. **Prueba social / anti-estafa** (logos de marca, prueba de pago, FAQ,
+   "empresa con nombre"). 4. **Onboarding en pasos numerados**. 5. **Stat-cards**. 6. **Brief
+   estructurado** (objetivo, guión, do's/don'ts, ejemplos, guía). 7. **Modelo de pago:** CPM
+   por 1,000 vistas verificadas + mínimo de pago + ventana de revisión + verificación de vistas
+   (por API en las referencias; **manual en Kamaq hoy**) + anti-bot. 8. **App:** las puras de
+   clipping son **web/PWA**; solo Whop (plataforma grande) tiene app nativa → Kamaq va **PWA
+   primero**, nativa en el roadmap.
+
 ## 2. Arquitectura
 - **Frontend:** una sola SPA en `index.html` (JS vanilla, todo el HTML/CSS/JS inline).
   Se eligió un solo archivo por velocidad de validación. `supabase-js` v2 por CDN.
